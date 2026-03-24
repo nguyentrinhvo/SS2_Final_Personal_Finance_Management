@@ -2,11 +2,11 @@ import { Link, useLocation } from 'react-router-dom';
 import { LayoutDashboard, Wallet, PieChart, Target, User, LogOut } from 'lucide-react';
 
 const menuItems = [
-  { name: 'Tổng quan', path: '/', icon: LayoutDashboard },
-  { name: 'Giao dịch', path: '/transactions', icon: Wallet },
-  { name: 'Báo cáo', path: '/reports', icon: PieChart },
-  { name: 'Mục tiêu', path: '/goals', icon: Target },
-  { name: 'Tài khoản', path: '/accounts', icon: User },
+  { name: 'Tổng quan', path: '/dashboard', icon: LayoutDashboard },
+  { name: 'Giao dịch', path: '/dashboard/transactions', icon: Wallet },
+  { name: 'Báo cáo', path: '/dashboard/reports', icon: PieChart },
+  { name: 'Mục tiêu', path: '/dashboard/goals', icon: Target },
+  { name: 'Tài khoản', path: '/dashboard/accounts', icon: User },
 ];
 
 export default function Sidebar() {
