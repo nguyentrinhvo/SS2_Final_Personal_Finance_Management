@@ -3,7 +3,6 @@ import Login from './pages/auth/Login';
 import Register from './pages/auth/Register';
 import DashboardLayout from './components/layout/DashboardLayout';
 import Home from './pages/dashboard/Home';
-// Import các trang khác tương tự...
 
 function App() {
   return (
