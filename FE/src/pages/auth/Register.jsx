@@ -48,6 +48,17 @@ const Register = () => {
                 placeholder="••••••••"
               />
             </div>
+            <div>
+              <label htmlFor="confirm-password" name="confirm-password" className="block text-sm font-medium text-gray-700">Nhập lại mật khẩu</label>
+              <input
+                id="confirm-password"
+                name="confirm-password"
+                type="password"
+                required
+                className="appearance-none relative block w-full px-3 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-xl focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm mt-1"
+                placeholder="••••••••"
+              />
+            </div>
           </div>
 
           <div>
