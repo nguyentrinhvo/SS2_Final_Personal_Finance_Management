@@ -8,6 +8,9 @@ import Home from './pages/dashboard/Home';
 import Accounts from './pages/dashboard/Accounts';
 import Transactions from './pages/dashboard/Transactions';
 import Categories from './pages/dashboard/Categories';
+import Budgets from './pages/dashboard/Budgets';
+import Goals from './pages/dashboard/Goals';
+import Reports from './pages/dashboard/Reports';
 import axios from 'axios';
 
 function App() {
@@ -35,10 +38,10 @@ function App() {
           <Route index element={<Home />} />
           <Route path="accounts" element={<Accounts />} />
           <Route path="categories" element={<Categories />} />
-          <Route path="goals" element={<div>Goals Page</div>} />
-          <Route path="reports" element={<div>Report Page</div>} />
+          <Route path="goals" element={<Goals />} />
+          <Route path="reports" element={<Reports />} />
           <Route path="transactions" element={<Transactions />} />
-          <Route path="budgets" element={<div>Budgets Page</div>} />
+          <Route path="budgets" element={<Budgets />} />
         </Route>
       </Routes>
     </BrowserRouter>
