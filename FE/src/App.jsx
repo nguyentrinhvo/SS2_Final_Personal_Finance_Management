@@ -7,6 +7,7 @@ import DashboardLayout from './components/layout/DashboardLayout';
 import Home from './pages/dashboard/Home';
 import Accounts from './pages/dashboard/Accounts';
 import Transactions from './pages/dashboard/Transactions';
+import Categories from './pages/dashboard/Categories';
 import axios from 'axios';
 
 function App() {
@@ -33,6 +34,7 @@ function App() {
         <Route path="/dashboard" element={<DashboardLayout />}>
           <Route index element={<Home />} />
           <Route path="accounts" element={<Accounts />} />
+          <Route path="categories" element={<Categories />} />
           <Route path="goals" element={<div>Goals Page</div>} />
           <Route path="reports" element={<div>Report Page</div>} />
           <Route path="transactions" element={<Transactions />} />

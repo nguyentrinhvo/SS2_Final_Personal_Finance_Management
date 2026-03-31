@@ -21,4 +21,15 @@ public class CategoryController {
         List<Category> categories = categoryService.getCategoriesByUserId(userId);
         return ResponseEntity.ok(categories);
     }
+
+    @PostMapping("/user/{userId}")
+    public ResponseEntity<Category> createCategory(@PathVariable Long userId, @RequestBody Category category) {
+        return ResponseEntity.ok(categoryService.createCustomCategory(userId, category));
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteCategory(@PathVariable Long id) {
+        categoryService.deleteCategory(id);
+        return ResponseEntity.ok().build();
+    }
 }

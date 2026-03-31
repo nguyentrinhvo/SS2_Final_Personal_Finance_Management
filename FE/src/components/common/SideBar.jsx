@@ -11,7 +11,8 @@ import {
   LogOut,
   Briefcase,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  LayoutGrid
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -19,6 +20,7 @@ const menuItems = [
   { name: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
   { name: 'Transactions', path: '/dashboard/transactions', icon: ArrowLeftRight },
   { name: 'Accounts', path: '/dashboard/accounts', icon: Landmark },
+  { name: 'Categories', path: '/dashboard/categories', icon: LayoutGrid },
   { name: 'Budgets', path: '/dashboard/budgets', icon: PieChart },
   { name: 'Goals', path: '/dashboard/goals', icon: Target },
   { name: 'Reports', path: '/dashboard/reports', icon: FileText },
@@ -42,9 +44,9 @@ export default function Sidebar({ isCollapsed, setIsCollapsed }) {
       {/* Toggle Button */}
       <button 
         onClick={() => setIsCollapsed(!isCollapsed)}
-        className="absolute -right-4 top-8 bg-white border border-slate-200 text-slate-500 rounded-full p-1.5 hover:text-orange-600 transition-colors shadow-sm"
+        className="absolute -right-3 top-10 bg-white border border-slate-200 text-slate-500 rounded-lg p-1 hover:text-orange-600 hover:border-orange-200 transition-all shadow-sm z-[60]"
       >
-        {isCollapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
+        {isCollapsed ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
       </button>
 
       {/* Top Section: Logo */}
