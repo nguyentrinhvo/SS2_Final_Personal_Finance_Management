@@ -6,6 +6,7 @@ import Register from './pages/auth/Register';
 import DashboardLayout from './components/layout/DashboardLayout';
 import Home from './pages/dashboard/Home';
 import Accounts from './pages/dashboard/Accounts';
+import Transactions from './pages/dashboard/Transactions';
 import axios from 'axios';
 
 function App() {
@@ -34,7 +35,7 @@ function App() {
           <Route path="accounts" element={<Accounts />} />
           <Route path="goals" element={<div>Goals Page</div>} />
           <Route path="reports" element={<div>Report Page</div>} />
-          <Route path="transactions" element={<div>Transactions Page</div>} />
+          <Route path="transactions" element={<Transactions />} />
           <Route path="budgets" element={<div>Budgets Page</div>} />
         </Route>
       </Routes>

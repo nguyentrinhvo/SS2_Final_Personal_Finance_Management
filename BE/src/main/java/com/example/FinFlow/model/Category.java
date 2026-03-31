@@ -1,5 +1,6 @@
 package com.example.FinFlow.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -27,5 +28,6 @@ public class Category {
     private User user;
 
     @OneToMany(mappedBy = "category")
+    @JsonIgnore
     private List<Transaction> transactions;
 }
