@@ -1,30 +1,51 @@
-// src/pages/dashboard/Home.jsx
+import React from 'react';
+import { DollarSign, TrendingUp, TrendingDown } from 'lucide-react';
 import StatCard from '../../components/ui/StatCard';
+import SpendingTrendChart from '../../components/dashboard/SpendingTrendChart';
+import ActiveGoals from '../../components/dashboard/ActiveGoals';
+import TransactionTable from '../../components/dashboard/TransactionTable';
 
 const Home = () => {
   return (
-    <div className="space-y-6">
-      <header>
-        <h2 className="text-2xl font-bold text-gray-800">Chào buổi sáng, Tú!</h2>
-        <p className="text-gray-500">Đây là tình hình tài chính của bạn hôm nay.</p>
-      </header>
+    <div className="space-y-10 animate-in fade-in slide-in-from-bottom-2 duration-700 pb-10">
+      {/* Stats Summary */}
 
-      {/* Thống kê nhanh */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <StatCard title="Tổng số dư" value="45,000,000đ" color="text-blue-600" />
-        <StatCard title="Thu nhập (Tháng)" value="+12,500,000đ" color="text-green-600" />
-        <StatCard title="Chi tiêu (Tháng)" value="-8,200,000đ" color="text-red-600" />
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <StatCard
+          title="Total Balance"
+          value="$45,280.00"
+          change="2.5"
+          isPositive={true}
+          icon={DollarSign}
+        />
+        <StatCard
+          title="Monthly Income"
+          value="$6,200.00"
+          change="1.2"
+          isPositive={true}
+          icon={TrendingUp}
+        />
+        <StatCard
+          title="Monthly Expenses"
+          value="$3,450.00"
+          change="5.4"
+          isPositive={false}
+          icon={TrendingDown}
+        />
       </div>
 
-      {/* Khu vực biểu đồ */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm h-80 flex items-center justify-center">
-          <p className="text-gray-400 italic">[Biểu đồ thu chi hàng tuần]</p>
+      {/* Main Charts & Goals Area */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="lg:col-span-2 flex">
+          <SpendingTrendChart />
         </div>
-        <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm h-80 flex items-center justify-center">
-          <p className="text-gray-400 italic">[Phân bổ chi tiêu theo hạng mục]</p>
+        <div className="flex">
+          <ActiveGoals />
         </div>
       </div>
+
+      {/* Transaction Table Section */}
+      <TransactionTable />
     </div>
   );
 };

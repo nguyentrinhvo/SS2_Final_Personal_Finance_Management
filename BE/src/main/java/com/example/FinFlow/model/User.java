@@ -1,9 +1,7 @@
-package com.example.FinFlow.entity;
+package com.example.FinFlow.model;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -13,6 +11,8 @@ import java.util.List;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
+@Getter
+@Setter
 public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -20,6 +20,8 @@ public class User {
 
     @Column(unique = true, nullable = false)
     private String email;
+
+    private String fullName;
 
     @Column(nullable = false)
     private String passwordHash;
