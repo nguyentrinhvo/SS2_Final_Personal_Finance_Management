@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Search, Bell, Menu } from 'lucide-react';
+import { Search, Bell, Menu, X, Trash2, ArrowRight, Check } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 
@@ -24,7 +24,129 @@ export default function Navbar({ toggleMobileMenu }) {
   const [searchResults, setSearchResults] = useState([]);
   const [searchLoading, setSearchLoading] = useState(false);
   const searchRef = useRef(null);
+  const notifRef = useRef(null);
   const userId = localStorage.getItem('userId');
+
+  // Notifications
+  const [notifications, setNotifications] = useState([]);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [showAllModal, setShowAllModal] = useState(false);
+  const [badgeCount, setBadgeCount] = useState(0);
+
+  useEffect(() => {
+    if (!userId) return;
+    const fetchNotifications = async () => {
+      try {
+        const [budgetsRes, trxsRes, goalsRes] = await Promise.all([
+          axios.get(`http://localhost:8080/api/budgets/user/${userId}/current`),
+          axios.get(`http://localhost:8080/api/transactions/user/${userId}/all`),
+          axios.get(`http://localhost:8080/api/goals/user/${userId}`)
+        ]);
+        
+        const currentMonth = new Date().getMonth();
+        const clearedStr = localStorage.getItem('clearedNotifications') || '[]';
+        const clearedIds = JSON.parse(clearedStr);
+
+        const newNotifs = [];
+
+        // 1. Check Budgets (Exceeded & Warning)
+        budgetsRes.data.forEach(b => {
+          const spent = trxsRes.data
+            .filter(t => t.category?.categoryId === b.category?.categoryId && new Date(t.transactionDate).getMonth() === currentMonth)
+            .reduce((sum, t) => sum + (t.amount || 0), 0);
+          
+          if (spent > b.amountLimit) {
+            const notifId = `budget_exceeded_${b.budgetId}_${currentMonth}`;
+            if (!clearedIds.includes(notifId)) {
+              newNotifs.push({
+                id: notifId,
+                type: 'BUDGET_EXCEEDED',
+                severity: 'danger',
+                message: `Budget Exceeded: ${b.category?.name}`,
+                detail: `Spent ${spent.toLocaleString()} / ${b.amountLimit.toLocaleString()} đ`,
+                link: '/dashboard/budgets'
+              });
+            }
+          } else if (spent >= b.amountLimit * 0.95) {
+            const notifId = `budget_warning_${b.budgetId}_${currentMonth}`;
+            if (!clearedIds.includes(notifId)) {
+              newNotifs.push({
+                id: notifId,
+                type: 'BUDGET_WARNING',
+                severity: 'warning',
+                message: `Budget Critical: ${b.category?.name}`,
+                detail: `Only ${((1 - spent/b.amountLimit)*100).toFixed(0)}% remaining today.`,
+                link: '/dashboard/budgets'
+              });
+            }
+          }
+        });
+
+        // 2. Check Goals (Completed)
+        goalsRes.data.forEach(g => {
+            if (g.currentAmount >= g.targetAmount) {
+                const notifId = `goal_completed_${g.goalId}`;
+                if (!clearedIds.includes(notifId)) {
+                    newNotifs.push({
+                        id: notifId,
+                        type: 'GOAL_COMPLETED',
+                        severity: 'success',
+                        message: `Goal Achieved: ${g.name}`,
+                        detail: `Successfully saved ${g.targetAmount.toLocaleString()} đ. Congrats!`,
+                        link: '/dashboard/goals'
+                    });
+                }
+            }
+        });
+
+        setNotifications(newNotifs);
+
+        const viewedStr = localStorage.getItem('viewedNotifications') || '[]';
+        const viewedIds = JSON.parse(viewedStr);
+        const unread = newNotifs.filter(n => !viewedIds.includes(n.id));
+        setBadgeCount(unread.length);
+
+      } catch(err) {
+        console.error('Failed to fetch notifications', err);
+      }
+    };
+    fetchNotifications();
+
+    // Auto-refresh notifications every second
+    const interval = setInterval(fetchNotifications, 1000);
+
+    window.addEventListener('transactionRefresh', fetchNotifications);
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('transactionRefresh', fetchNotifications);
+    };
+  }, [userId]);
+
+  const handleOpenDropdown = () => {
+      setShowNotifications(!showNotifications);
+      if (!showNotifications) {
+          setBadgeCount(0);
+          const viewedIds = notifications.map(n => n.id);
+          localStorage.setItem('viewedNotifications', JSON.stringify(viewedIds));
+      }
+  };
+
+  const handleClearAllNotifications = () => {
+      const allIds = notifications.map(n => n.id);
+      const prevCleared = JSON.parse(localStorage.getItem('clearedNotifications') || '[]');
+      localStorage.setItem('clearedNotifications', JSON.stringify([...prevCleared, ...allIds]));
+      setNotifications([]);
+      setBadgeCount(0);
+      setShowNotifications(false);
+      setShowAllModal(false);
+  };
+
+  const handleClearSingle = (e, id) => {
+      e.stopPropagation();
+      const prevCleared = JSON.parse(localStorage.getItem('clearedNotifications') || '[]');
+      localStorage.setItem('clearedNotifications', JSON.stringify([...prevCleared, id]));
+      setNotifications(notifications.filter(n => n.id !== id));
+  };
 
   useEffect(() => {
     if (!searchQuery.trim() || !userId) {
@@ -55,6 +177,9 @@ export default function Navbar({ toggleMobileMenu }) {
     const handleClickOutside = (e) => {
       if (searchRef.current && !searchRef.current.contains(e.target)) {
         setShowSearchResults(false);
+      }
+      if (notifRef.current && !notifRef.current.contains(e.target)) {
+        setShowNotifications(false);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
@@ -128,11 +253,132 @@ export default function Navbar({ toggleMobileMenu }) {
         </div>
 
         {/* Notification Bell */}
-        <button className="bg-slate-50 p-2 text-slate-500 hover:text-orange-600 hover:bg-orange-50 rounded-xl relative transition-all group">
-          <Bell size={18} />
-          <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-red-500 rounded-full border-2 border-white animate-pulse"></span>
-        </button>
+        <div className="relative" ref={notifRef}>
+          <button 
+             onClick={handleOpenDropdown}
+             className="bg-slate-50 p-2 text-slate-500 hover:text-orange-600 hover:bg-orange-50 rounded-xl relative transition-all group">
+            <Bell size={18} />
+            {badgeCount > 0 && (
+              <span className="absolute -top-1.5 -right-1.5 bg-red-500 text-white text-[9px] font-black w-4 h-4 flex items-center justify-center rounded-full border-2 border-white shadow-sm">
+                {badgeCount}
+              </span>
+            )}
+          </button>
+          
+          {showNotifications && (
+            <div className="absolute top-full right-0 w-[300px] sm:w-[340px] mt-2 bg-white rounded-2xl shadow-[0_10px_40px_-10px_rgba(0,0,0,0.15)] border border-slate-100 py-2 z-50 animate-in fade-in zoom-in-95 duration-150">
+              <div className="px-4 py-3 border-b border-slate-50 flex items-center justify-between">
+                 <h4 className="font-extrabold text-slate-800">Notifications</h4>
+                 {notifications.length > 0 && (
+                   <button onClick={handleClearAllNotifications} className="text-xs font-bold text-slate-400 hover:text-red-500 transition-colors flex items-center gap-1">
+                      <Trash2 size={12} /> Clear all
+                   </button>
+                 )}
+              </div>
+              <div className="max-h-[300px] overflow-y-auto">
+                 {notifications.length > 0 ? (
+                   <>
+                     {notifications.slice(0, 3).map(n => (
+                       <div 
+                          key={n.id} 
+                          onClick={() => { setShowNotifications(false); navigate(n.link); }}
+                          className="px-4 py-3 border-b border-slate-50 hover:bg-slate-50 transition-colors cursor-pointer group relative"
+                       >
+                          <div className="flex items-start gap-3 pr-6">
+                             <div className={`p-2 rounded-xl shrink-0 mt-0.5 group-hover:scale-110 transition-transform ${
+                                n.severity === 'danger' ? 'bg-red-100 text-red-600' : 
+                                n.severity === 'warning' ? 'bg-amber-100 text-amber-600' : 'bg-emerald-100 text-emerald-600'
+                             }`}>
+                                {n.type === 'GOAL_COMPLETED' ? <Check size={16} /> : <Bell size={16} />}
+                             </div>
+                             <div className="flex-1 min-w-0">
+                                <p className="text-[13px] font-bold text-slate-800 leading-tight group-hover:text-orange-600 transition-colors truncate">{n.message}</p>
+                                <p className="text-[11px] font-semibold text-slate-500 mt-1">
+                                    {n.detail}
+                                </p>
+                             </div>
+                          </div>
+                          <button 
+                            onClick={(e) => handleClearSingle(e, n.id)}
+                            className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-lg opacity-0 group-hover:opacity-100 transition-all"
+                          >
+                            <X size={14} />
+                          </button>
+                       </div>
+                     ))}
+                     {notifications.length > 3 && (
+                       <button 
+                          onClick={() => { setShowNotifications(false); setShowAllModal(true); }}
+                          className="w-full text-center px-4 py-3 text-[11px] font-bold text-orange-600 hover:bg-orange-50 transition-colors"
+                       >
+                         See all ({notifications.length}) notifications →
+                       </button>
+                     )}
+                   </>
+                 ) : (
+                   <div className="px-4 py-8 text-center text-slate-400 text-xs font-medium">No new notifications</div>
+                 )}
+              </div>
+            </div>
+          )}
+        </div>
       </div>
+
+      {/* See All Notifications Modal */}
+      {showAllModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-300">
+          <div className="bg-white rounded-[28px] shadow-2xl w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-300 border border-slate-100">
+            <div className="p-6 border-b border-slate-50 flex items-center justify-between bg-slate-50/30">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-orange-100 text-orange-600 rounded-xl"><Bell size={18} /></div>
+                <h3 className="text-lg font-black text-slate-900 tracking-tight">Alert Center</h3>
+              </div>
+              <div className="flex items-center gap-1">
+                 <button onClick={handleClearAllNotifications} className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-colors" title="Clear All">
+                    <Trash2 size={18} />
+                 </button>
+                 <button onClick={() => setShowAllModal(false)} className="p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-700 rounded-xl transition-all">
+                    <X size={18} />
+                 </button>
+              </div>
+            </div>
+            
+            <div className="p-2 max-h-[400px] overflow-y-auto">
+                <div className="flex flex-col gap-1">
+                  {notifications.map(n => (
+                     <div 
+                        key={n.id} 
+                        onClick={() => { setShowAllModal(false); navigate(n.link); }}
+                        className="flex items-start gap-4 p-4 rounded-2xl hover:bg-slate-50 transition-all cursor-pointer group relative"
+                     >
+                        <div className={`p-2.5 rounded-xl shrink-0 group-hover:scale-105 transition-transform ${
+                            n.severity === 'danger' ? 'bg-red-50 text-red-500' : 
+                            n.severity === 'warning' ? 'bg-amber-50 text-amber-500' : 'bg-emerald-50 text-emerald-500'
+                        }`}>
+                          {n.type === 'GOAL_COMPLETED' ? <Check size={18} /> : <Bell size={18} />}
+                        </div>
+                        <div className="flex-1 mt-0.5 pr-6">
+                           <p className="text-sm font-bold text-slate-800 leading-tight group-hover:text-orange-600 transition-colors">{n.message}</p>
+                           <p className="text-[11px] font-semibold text-slate-500 mt-1">
+                               {n.detail}
+                           </p>
+                        </div>
+                        <button 
+                          onClick={(e) => handleClearSingle(e, n.id)}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-lg opacity-0 group-hover:opacity-100 transition-all"
+                        >
+                          <X size={16} />
+                        </button>
+                     </div>
+                  ))}
+                </div>
+            </div>
+            <div className="p-4 bg-slate-50/50 text-center border-t border-slate-100">
+               <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">End of notices</p>
+            </div>
+          </div>
+        </div>
+      )}
     </header>
   );
 }

@@ -62,20 +62,7 @@ const Home = () => {
         accounts: accs.data
       });
 
-      // Budget Alerts
-      budgets.data.forEach(b => {
-        const spent = trxs.data
-          .filter(t => t.category?.categoryId === b.category?.categoryId && new Date(t.transactionDate).getMonth() === currentMonth)
-          .reduce((sum, t) => sum + (t.amount || 0), 0);
-        
-        if (spent > b.amountLimit) {
-           toast(`Budget Exceeded: ${b.category?.name}`, {
-             icon: '⚠️',
-             duration: 6000,
-             style: { borderRadius: '24px', background: '#221610', color: '#fff', fontWeight: 'bold' },
-           });
-        }
-      });
+      // Notifications have been moved to Navbar
     } catch (err) {
       console.error(err);
       toast.error(`Sync Error: ${err.message}`);
