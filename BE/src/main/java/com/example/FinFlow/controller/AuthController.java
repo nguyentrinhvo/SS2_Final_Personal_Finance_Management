@@ -41,7 +41,8 @@ public class AuthController {
             return ResponseEntity.ok(Map.of(
                 "message", "Login successful", 
                 "userId", registeredUser.getUserId(),
-                "fullName", registeredUser.getFullName() != null ? registeredUser.getFullName() : registeredUser.getEmail()
+                "fullName", registeredUser.getFullName() != null ? registeredUser.getFullName() : registeredUser.getEmail(),
+                "avatarUrl", registeredUser.getAvatarUrl() != null ? registeredUser.getAvatarUrl() : ""
             ));
         } else {
             return ResponseEntity.status(401).body(Map.of("error", "Invalid email or password"));

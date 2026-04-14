@@ -8,11 +8,11 @@ import com.example.FinFlow.repository.TransactionRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.data.domain.PageRequest;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -25,9 +25,7 @@ public class TransactionService {
     private AccountRepository accountRepository;
 
     public List<Transaction> getRecentTransactionsByUser(Long userId, int limit) {
-        return transactionRepository.findRecentByUserId(userId).stream()
-                .limit(limit)
-                .collect(Collectors.toList());
+        return transactionRepository.findRecentByUserId(userId, PageRequest.of(0, limit));
     }
 
     public List<Transaction> getRecentTransactionsByAccount(Long accountId, int limit) {
@@ -38,7 +36,7 @@ public class TransactionService {
     }
 
     public List<Transaction> getAllTransactionsByUserId(Long userId) {
-        return transactionRepository.findRecentByUserId(userId);
+        return transactionRepository.findByAccount_User_UserId(userId);
     }
 
     @Transactional

@@ -2,6 +2,7 @@ package com.example.FinFlow.model;
 
 import jakarta.persistence.*;
 import lombok.*;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -24,16 +25,26 @@ public class User {
     private String fullName;
 
     @Column(nullable = false)
+    @JsonIgnore
     private String passwordHash;
 
     private LocalDateTime createdAt = LocalDateTime.now();
 
     @OneToMany(mappedBy = "user")
+    @JsonIgnore
     private List<Account> accounts;
 
     @OneToMany(mappedBy = "user")
+    @JsonIgnore
     private List<Category> categories;
 
     @OneToMany(mappedBy = "user")
+    @JsonIgnore
     private List<Budget> budgets;
+    
+    @OneToMany(mappedBy = "user")
+    @JsonIgnore
+    private List<Goal> goals;
+
+    private String avatarUrl;
 }

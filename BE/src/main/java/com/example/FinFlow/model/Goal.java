@@ -2,9 +2,9 @@ package com.example.FinFlow.model;
 
 import jakarta.persistence.*;
 import lombok.*;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
 
 @Entity
 @Table(name = "goals")
@@ -19,13 +19,19 @@ public class Goal {
     private Long goalId;
 
     private String name;
+
     private BigDecimal targetAmount;
+
     private BigDecimal currentAmount;
+
+    private String deadline;
+
     private String category;
-    private LocalDate deadline;
-    private String imageUrl;
 
     @ManyToOne
     @JoinColumn(name = "user_id")
+    @JsonIgnore
     private User user;
+
+    private String imageUrl;
 }

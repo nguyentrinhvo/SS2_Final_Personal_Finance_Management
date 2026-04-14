@@ -18,6 +18,7 @@ const Login = () => {
       localStorage.setItem('userId', response.data.userId);
       localStorage.setItem('fullName', response.data.fullName);
       localStorage.setItem('email', email);
+      localStorage.setItem('avatarUrl', response.data.avatarUrl || '');
       toast.success('Login successful!');
       navigate('/dashboard');
     } catch (error) {

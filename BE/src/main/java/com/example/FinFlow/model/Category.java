@@ -25,6 +25,7 @@ public class Category {
 
     @ManyToOne
     @JoinColumn(name = "user_id") // Nullable if default category
+    @JsonIgnore
     private User user;
 
     @OneToMany(mappedBy = "category")

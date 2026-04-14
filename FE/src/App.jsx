@@ -11,6 +11,7 @@ import Categories from './pages/dashboard/Categories';
 import Budgets from './pages/dashboard/Budgets';
 import Goals from './pages/dashboard/Goals';
 import Reports from './pages/dashboard/Reports';
+import Profile from './pages/dashboard/Profile';
 import axios from 'axios';
 
 function App() {
@@ -42,6 +43,7 @@ function App() {
           <Route path="reports" element={<Reports />} />
           <Route path="transactions" element={<Transactions />} />
           <Route path="budgets" element={<Budgets />} />
+          <Route path="profile" element={<Profile />} />
         </Route>
       </Routes>
     </BrowserRouter>

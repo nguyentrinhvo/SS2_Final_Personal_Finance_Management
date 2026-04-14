@@ -1,324 +1,334 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import toast from 'react-hot-toast';
-import { 
-  Plus, 
-  Download, 
-  TrendingUp, 
-  ShieldCheck, 
-  X,
-  CreditCard,
-  Briefcase,
-  Target,
-  Home,
-  Car,
-  Activity,
-  Heart,
-  Plane,
-  Coins
-} from 'lucide-react';
+import { Target, Plus, X, Trash2, Edit2, TrendingUp, Camera, Wallet, Check, RotateCcw } from 'lucide-react';
 
 const GOAL_API = 'http://localhost:8080/api/goals';
 
-export default function Goals() {
-  const [goals, setGoals] = useState([]);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [formData, setFormData] = useState({
-    name: '',
-    targetAmount: '',
-    currentAmount: '0',
-    category: 'Lifestyle',
-    deadline: '',
-    imageUrl: 'https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?auto=format&fit=crop&q=80'
-  });
+const Goals = () => {
+    const [goals, setGoals] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [showFundInput, setShowFundInput] = useState(null);
+    const [fundAmount, setFundAmount] = useState('');
+    const [fundMode, setFundMode] = useState('ADD');
+    const [isEditMode, setIsEditMode] = useState(false);
+    const [editingGoalId, setEditingGoalId] = useState(null);
+    const [isUploading, setIsUploading] = useState(false);
+    
+    const [formData, setFormData] = useState({ 
+        name: '', 
+        targetAmount: '', 
+        currentAmount: '0', 
+        category: 'SAVINGS',
+        imageUrl: ''
+    });
+    
+    const userId = localStorage.getItem('userId');
 
-  const userId = localStorage.getItem('userId');
+    // Helper to format string with dots for UI
+    const formatDisplay = (val) => {
+        if (!val) return '';
+        const num = val.toString().replace(/\D/g, '');
+        return num.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+    };
 
-  const fetchData = async () => {
-    if (!userId) return;
-    try {
-      const res = await axios.get(`${GOAL_API}/user/${userId}`);
-      setGoals(Array.isArray(res.data) ? res.data : []);
-    } catch (err) {
-      console.error('Fetch Goals Error:', err);
-      toast.error('Failed to load goals');
-    }
-  };
+    // Helper to clean dots before saving/calculating
+    const cleanNum = (val) => {
+        return val.toString().replace(/\./g, '');
+    };
 
-  useEffect(() => {
-    fetchData();
-  }, [userId]);
+    const handleFileUpload = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const formDataFile = new FormData();
+        formDataFile.append('file', file);
+        setIsUploading(true);
+        try {
+            const res = await axios.post('http://localhost:8080/api/files/upload', formDataFile, {
+                headers: { 'Content-Type': 'multipart/form-data' }
+            });
+            setFormData({ ...formData, imageUrl: res.data.url });
+            toast.success('Image uploaded!');
+        } catch (err) {
+            toast.error('Upload failed');
+        } finally {
+            setIsUploading(false);
+        }
+    };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    try {
-      await axios.post(`${GOAL_API}/user/${userId}`, {
-        ...formData,
-        targetAmount: parseFloat(formData.targetAmount),
-        currentAmount: parseFloat(formData.currentAmount || 0)
-      });
-      toast.success('Goal created successfully!');
-      setIsModalOpen(false);
-      setFormData({
-        name: '',
-        targetAmount: '',
-        currentAmount: '0',
-        category: 'Lifestyle',
-        deadline: '',
-        imageUrl: 'https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?auto=format&fit=crop&q=80'
-      });
-      fetchData();
-    } catch (err) {
-      toast.error('Failed to create goal');
-    }
-  };
+    const fetchGoals = async () => {
+        if (!userId) return;
+        try {
+            const response = await axios.get(`${GOAL_API}/user/${userId}`);
+            setGoals(response.data || []);
+        } catch (error) {
+            toast.error('Failed to load goals');
+        } finally {
+            setLoading(false);
+        }
+    };
 
-  const handleAddFunds = async (goalId) => {
-    const amount = prompt('Enter amount to contribute:');
-    if (!amount || isNaN(amount)) return;
-    try {
-      await axios.put(`${GOAL_API}/${goalId}/add/${amount}`);
-      toast.success('Funds added!');
-      fetchData();
-    } catch (err) {
-      toast.error('Failed to add funds');
-    }
-  };
+    useEffect(() => {
+        fetchGoals();
+    }, [userId]);
 
-  const getCategoryIcon = (cat) => {
-    const c = cat?.toLowerCase() || '';
-    if (c.includes('car') || c.includes('transport')) return <Car size={16} />;
-    if (c.includes('home') || c.includes('prop')) return <Home size={16} />;
-    if (c.includes('secure') || c.includes('emergency')) return <ShieldCheck size={16} />;
-    if (c.includes('life') || c.includes('vacation')) return <Plane size={16} />;
-    if (c.includes('health') || c.includes('wed')) return <Heart size={16} />;
-    return <Target size={16} />;
-  };
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        try {
+            const payload = {
+                ...formData,
+                targetAmount: parseFloat(cleanNum(formData.targetAmount)),
+                currentAmount: parseFloat(cleanNum(formData.currentAmount))
+            };
+            if (isEditMode) {
+                await axios.put(`${GOAL_API}/${editingGoalId}`, payload);
+            } else {
+                await axios.post(`${GOAL_API}/user/${userId}`, payload);
+            }
+            setIsModalOpen(false);
+            resetForm();
+            fetchGoals();
+            toast.success(isEditMode ? 'Updated' : 'Created');
+        } catch (error) {
+            toast.error('Operation failed');
+        }
+    };
 
-  const totalSavedValue = goals.reduce((sum, g) => sum + (g.currentAmount || 0), 0);
-  const avgContribution = goals.length > 0 ? totalSavedValue / goals.length : 0; 
+    const resetForm = () => {
+        setFormData({ name: '', targetAmount: '', currentAmount: '0', category: 'SAVINGS', imageUrl: '' });
+        setIsEditMode(false);
+        setEditingGoalId(null);
+    };
 
-  return (
-    <div className="max-w-[1200px] mx-auto w-full p-6 md:p-10 space-y-10 animate-in fade-in duration-700 pb-20">
-      
-      {/* Title & Action Header */}
-      <div className="flex flex-wrap items-center justify-between gap-6">
-        <div className="space-y-1">
-          <h1 className="text-4xl font-black tracking-tighter text-slate-900 dark:text-white leading-none">Savings Goals</h1>
-          <p className="text-slate-500 font-medium">Track and manage your long-term financial milestones</p>
+    const handleEditClick = (goal) => {
+        setFormData({
+            name: goal.name,
+            targetAmount: goal.targetAmount.toString(),
+            currentAmount: goal.currentAmount.toString(),
+            category: goal.category,
+            imageUrl: goal.imageUrl || ''
+        });
+        setEditingGoalId(goal.goalId);
+        setIsEditMode(true);
+        setIsModalOpen(true);
+    };
+
+    const handleFundUpdate = async (goalId, amount, isSubtract = false) => {
+        let value = parseFloat(cleanNum(amount) || 0);
+        if (isNaN(value) || value <= 0) {
+            toast.error('Invalid amount');
+            return;
+        }
+        if (isSubtract) value = -value;
+
+        try {
+            await axios.put(`${GOAL_API}/${goalId}/add/${value}`);
+            toast.success('Funds updated');
+            setShowFundInput(null);
+            setFundAmount('');
+            fetchGoals();
+        } catch (error) {
+            toast.error('Failed');
+        }
+    };
+
+    const handleDelete = async (id) => {
+        if (!window.confirm('Delete this goal?')) return;
+        try {
+            await axios.delete(`${GOAL_API}/${id}`);
+            toast.success('Removed');
+            fetchGoals();
+        } catch (error) {
+            toast.error('Failed');
+        }
+    };
+
+    if (loading) return (
+        <div className="flex flex-col items-center justify-center p-20 space-y-4">
+            <div className="w-10 h-10 border-4 border-orange-600 border-t-transparent rounded-full animate-spin"></div>
+            <p className="font-bold text-orange-600 animate-pulse uppercase tracking-widest text-xs">Syncing Goals...</p>
         </div>
-        <div className="flex gap-4">
-          <button className="flex items-center gap-2 px-6 py-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-700 dark:text-slate-300 font-bold hover:bg-slate-50 transition-all">
-            <Download size={18} />
-            <span className="hidden sm:inline">Export to Excel</span>
-          </button>
-          <button 
-            onClick={() => setIsModalOpen(true)}
-            className="flex items-center gap-2 px-6 py-3 bg-orange-600 text-white rounded-xl font-bold shadow-xl shadow-orange-600/20 hover:scale-105 active:scale-95 transition-all"
-          >
-            <Plus size={18} />
-            <span>New Goal</span>
-          </button>
-        </div>
-      </div>
+    );
 
-      {/* Summary Pulse Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="bg-white dark:bg-slate-900 p-8 rounded-[32px] border border-slate-100 dark:border-slate-800 shadow-sm space-y-3 relative overflow-hidden group">
-          <div className="absolute top-0 left-0 w-2 h-full bg-orange-600"></div>
-          <div className="flex items-center gap-2 text-slate-500 font-black uppercase text-[10px] tracking-widest">
-            <Coins size={14} className="text-orange-600" />
-            <span>Total Saved Assets</span>
-          </div>
-          <div className="flex items-baseline gap-2">
-             <span className="text-4xl font-black text-slate-900 dark:text-white">${totalSavedValue.toLocaleString()}</span>
-             <span className="text-slate-400 text-sm font-bold uppercase tracking-widest">USD</span>
-          </div>
-          <div className="flex items-center gap-2 text-green-600 text-xs font-bold bg-green-50 dark:bg-green-500/10 px-3 py-1 rounded-full w-fit">
-            <TrendingUp size={14} />
-            <span>+5.2% from last month</span>
-          </div>
-        </div>
-
-        <div className="bg-white dark:bg-slate-900 p-8 rounded-[32px] border border-slate-100 dark:border-slate-800 shadow-sm space-y-3 relative overflow-hidden group">
-          <div className="absolute top-0 left-0 w-2 h-full bg-blue-600"></div>
-          <div className="flex items-center gap-2 text-slate-500 font-black uppercase text-[10px] tracking-widest">
-            <Activity size={14} className="text-blue-600" />
-            <span>Avg. Per Strategy</span>
-          </div>
-          <div className="flex items-baseline gap-2">
-             <span className="text-4xl font-black text-slate-900 dark:text-white">${Math.round(avgContribution).toLocaleString()}</span>
-             <span className="text-slate-400 text-sm font-bold uppercase tracking-widest">PER GOAL</span>
-          </div>
-          <div className="flex items-center gap-2 text-blue-600 text-xs font-bold bg-blue-50 dark:bg-blue-500/10 px-3 py-1 rounded-full w-fit">
-            <Briefcase size={14} />
-            <span>On track for all goals</span>
-          </div>
-        </div>
-      </div>
-
-      {/* Main Grid Grid */}
-      <div className="space-y-6">
-        <h2 className="text-2xl font-black tracking-tight text-slate-800 dark:text-slate-200 px-2">Your Active Goals</h2>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {goals.map(goal => {
-            const safeTarget = goal.targetAmount || 1;
-            const progress = Math.min(100, (goal.currentAmount / safeTarget) * 100);
-            
-            return (
-              <div 
-                key={goal.goalId} 
-                className="bg-white dark:bg-slate-900 rounded-[40px] border border-slate-50 dark:border-slate-800 shadow-sm p-6 space-y-6 group hover:shadow-2xl hover:-translate-y-2 transition-all duration-500"
-              >
-                <div 
-                  className="w-full aspect-[16/10] bg-slate-100 dark:bg-slate-800 rounded-[32px] overflow-hidden relative shadow-inner flex items-center justify-center group-hover:scale-105 transition-transform duration-500"
-                >
-                  {goal.imageUrl && goal.imageUrl.includes('http') ? (
-                     <img src={goal.imageUrl} className="w-full h-full object-cover" alt={goal.name} />
-                  ) : (
-                     <div className="text-slate-300 dark:text-slate-700"><Target size={48} /></div>
-                  )}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent"></div>
-                  <div className="absolute bottom-5 left-5 flex items-center gap-2">
-                    <span className="bg-orange-600 text-white text-[10px] font-black uppercase tracking-[0.2em] px-4 py-2 rounded-2xl shadow-lg">
-                      {goal.category || 'General'}
-                    </span>
-                  </div>
+    return (
+        <div className="max-w-7xl mx-auto space-y-8 animate-in fade-in duration-700 pb-20">
+            <div className="flex justify-between items-end px-4">
+                <div className="space-y-1">
+                   <h2 className="text-3xl font-black text-slate-900 tracking-tight">Financial Goals</h2>
+                   <p className="text-slate-400 font-bold text-xs uppercase tracking-widest">Achieve Your Dreams</p>
                 </div>
-
-                <div className="space-y-5">
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <h3 className="font-black text-2xl text-slate-900 dark:text-white leading-tight group-hover:text-orange-600 transition-colors">
-                        {goal.name}
-                      </h3>
-                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">
-                        Deadline: {goal.deadline ? new Date(goal.deadline).toLocaleDateString() : 'Continuous'}
-                      </p>
-                    </div>
-                    <div className="bg-orange-50 dark:bg-orange-500/10 text-orange-600 p-2 rounded-2xl">
-                       {getCategoryIcon(goal.category)}
-                    </div>
-                  </div>
-
-                  <div className="space-y-3">
-                    <div className="flex justify-between items-end">
-                      <div className="space-y-0.5">
-                        <span className="text-3xl font-black text-slate-900 dark:text-white tracking-tighter">
-                          ${goal.currentAmount?.toLocaleString()}
-                        </span>
-                        <span className="block text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                          Saved of ${goal.targetAmount?.toLocaleString()}
-                        </span>
-                      </div>
-                      <span className="text-lg font-black text-orange-600 bg-orange-50 dark:bg-orange-500/10 px-3 py-1 rounded-2xl">
-                        {Math.round(progress)}%
-                      </span>
-                    </div>
-
-                    <div className="h-3 w-full bg-slate-50 dark:bg-slate-800 rounded-full overflow-hidden border border-slate-50 dark:border-slate-800 relative">
-                       <div 
-                         className="h-full bg-orange-600 rounded-full shadow-[0_0_20px_rgba(234,88,12,0.4)] transition-all duration-1000 ease-out" 
-                         style={{ width: `${progress}%` }}
-                       ></div>
-                    </div>
-                  </div>
-
-                  <button 
-                    onClick={() => handleAddFunds(goal.goalId)}
-                    className="w-full py-5 bg-slate-50 dark:bg-slate-800 hover:bg-orange-600 hover:text-white text-slate-600 dark:text-slate-300 rounded-3xl font-black transition-all flex items-center justify-center gap-3 active:scale-95 shadow-sm hover:shadow-lg"
-                  >
-                    <Plus size={20} />
-                    <span>Invest Now</span>
-                  </button>
-                </div>
-              </div>
-            );
-          })}
-
-          {/* Creation Trigger Card */}
-          <div 
-            onClick={() => setIsModalOpen(true)}
-            className="rounded-[40px] border-4 border-dashed border-slate-100 dark:border-slate-800 flex flex-col items-center justify-center p-12 gap-8 group cursor-pointer hover:border-orange-200 dark:hover:border-orange-500/30 transition-all bg-slate-50/20 dark:bg-slate-800/20 min-h-[460px] animate-pulse hover:animate-none"
-          >
-            <div className="size-24 rounded-[32px] bg-white dark:bg-slate-900 text-slate-200 dark:text-slate-700 flex items-center justify-center group-hover:bg-orange-600 group-hover:text-white group-hover:rotate-90 transition-all duration-500 shadow-xl shadow-slate-200/50 dark:shadow-none">
-              <Plus size={48} />
-            </div>
-            <div className="text-center space-y-2">
-              <p className="text-2xl font-black text-slate-900 dark:text-white tracking-tighter">Initiate Global Asset</p>
-              <p className="text-slate-400 text-sm font-medium max-w-[200px] mx-auto">Establish a new target for capital accumulation.</p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Goal Strategy Modal */}
-      {isModalOpen && (
-        <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-3xl flex items-center justify-center z-[100] p-6 animate-in fade-in duration-300">
-           <div className="bg-white dark:bg-slate-900 rounded-[56px] shadow-2xl w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-500 border border-slate-100 dark:border-slate-800 relative">
-             <div className="flex items-center justify-between p-12 pb-6">
-               <h3 className="text-4xl font-black text-slate-800 dark:text-white tracking-tighter">New Strategy</h3>
-               <button onClick={() => setIsModalOpen(false)} className="p-4 bg-slate-50 dark:bg-slate-800 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-2xl text-slate-400 hover:text-red-500 transition-all"><X /></button>
-             </div>
-             <form onSubmit={handleSubmit} className="p-12 pt-6 space-y-8">
-                <div className="space-y-3">
-                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] ml-4">Goal Name</label>
-                  <input 
-                    type="text" required
-                    value={formData.name}
-                    onChange={e => setFormData({...formData, name: e.target.value})}
-                    className="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-3xl px-8 py-5 font-black text-slate-900 dark:text-white focus:ring-4 focus:ring-orange-500/10 text-lg transition-all"
-                    placeholder="e.g. Real Estate Acquisition"
-                  />
-                </div>
-                
-                <div className="grid grid-cols-2 gap-6">
-                  <div className="space-y-3">
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] ml-4">Target ($)</label>
-                    <input 
-                      type="number" required
-                      value={formData.targetAmount}
-                      onChange={e => setFormData({...formData, targetAmount: e.target.value})}
-                      className="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-3xl px-8 py-5 font-black text-slate-900 dark:text-white focus:ring-4 focus:ring-orange-500/10"
-                    />
-                  </div>
-                  <div className="space-y-3">
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] ml-4">Deadline</label>
-                    <input 
-                      type="date"
-                      value={formData.deadline}
-                      onChange={e => setFormData({...formData, deadline: e.target.value})}
-                      className="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-3xl px-6 py-5 font-black text-slate-900 dark:text-white focus:ring-4 focus:ring-orange-500/10 text-sm"
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-3">
-                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] ml-4">Venture Category</label>
-                  <select 
-                    value={formData.category}
-                    onChange={e => setFormData({...formData, category: e.target.value})}
-                    className="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-3xl px-8 py-5 font-black text-slate-900 dark:text-white focus:ring-4 focus:ring-orange-500/10"
-                  >
-                    <option value="Lifestyle">Lifestyle / Travel</option>
-                    <option value="Transportation">Transportation</option>
-                    <option value="Security">Emergency Fund</option>
-                    <option value="Property">Real Estate</option>
-                    <option value="Investment">Global Investment</option>
-                  </select>
-                </div>
-
                 <button 
-                  type="submit"
-                  className="w-full bg-slate-900 dark:bg-orange-600 text-white font-black py-6 rounded-[32px] shadow-2xl shadow-slate-900/30 dark:shadow-orange-600/20 transition-all hover:scale-[1.02] active:scale-95 text-xl mt-6 uppercase tracking-widest"
+                    onClick={() => { resetForm(); setIsModalOpen(true); }}
+                    className="bg-slate-900 text-white font-black px-6 py-4 rounded-2xl shadow-xl hover:scale-[1.03] active:scale-95 transition-all flex items-center gap-2 text-sm"
                 >
-                  Deploy Strategy
+                    <Plus size={18} /> Add Goal
                 </button>
-             </form>
-           </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 px-4">
+                {goals.length > 0 ? goals.map(goal => {
+                    const progress = Math.min(100, Math.max(0, (goal.currentAmount / (goal.targetAmount || 1)) * 100));
+                    const isComplete = progress >= 100;
+
+                    return (
+                        <div key={goal.goalId} className="bg-white rounded-[40px] border border-slate-100 shadow-sm flex flex-col hover:shadow-xl transition-all duration-500 overflow-hidden group h-full">
+                            <div className="h-48 w-full relative overflow-hidden bg-slate-50">
+                                {goal.imageUrl ? (
+                                    <img src={goal.imageUrl} alt={goal.name} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
+                                ) : (
+                                    <div className="w-full h-full flex items-center justify-center text-slate-200"><Target size={48} /></div>
+                                )}
+                                <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <button onClick={() => handleEditClick(goal)} className="p-2.5 bg-white/80 backdrop-blur-md rounded-xl text-slate-600 hover:text-orange-600 border border-white transition-all shadow-lg"><Edit2 size={14} /></button>
+                                    <button onClick={() => handleDelete(goal.goalId)} className="p-2.5 bg-white/80 backdrop-blur-md rounded-xl text-slate-600 hover:text-red-500 border border-white transition-all shadow-lg"><Trash2 size={14} /></button>
+                                </div>
+                            </div>
+
+                            <div className="px-8 pb-8 flex-1 flex flex-col space-y-4">
+                                <div className="space-y-1">
+                                    <div className="flex items-center gap-2">
+                                        <h3 className="text-xl font-black text-slate-900 tracking-tight leading-tight capitalize truncate">{goal.name}</h3>
+                                        {isComplete && <TrendingUp size={16} className="text-green-500 animate-bounce" />}
+                                    </div>
+                                    <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{goal.category}</p>
+                                </div>
+
+                                <div className="space-y-4">
+                                    <div className="flex flex-col gap-3">
+                                        <div className="space-y-1">
+                                            <div className="flex items-center gap-2 text-slate-400">
+                                                <Target size={12} strokeWidth={3} />
+                                                <p className="text-[9px] font-black uppercase tracking-[0.2em] leading-none">Target Goal</p>
+                                            </div>
+                                            <h4 className="text-2xl font-black text-slate-800 tracking-tighter leading-none">
+                                                {goal.targetAmount?.toLocaleString('vi-VN')} <span className="text-[10px] opacity-40 uppercase ml-0.5">đ</span>
+                                            </h4>
+                                        </div>
+                                        <div className="space-y-1">
+                                            <div className="flex items-center gap-2 text-orange-500">
+                                                <Wallet size={12} strokeWidth={3} />
+                                                <p className="text-[9px] font-black uppercase tracking-[0.2em] leading-none">Total Saved</p>
+                                            </div>
+                                            <div className="text-3xl font-black text-orange-600 tracking-tighter leading-none flex items-center gap-1.5">
+                                                {goal.currentAmount?.toLocaleString('vi-VN')} <span className="text-xs opacity-50 uppercase">đ</span>
+                                                {isComplete && <div className="p-1 bg-green-100 rounded-lg text-green-600"><Check size={14} strokeWidth={4} /></div>}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div className="space-y-2.5">
+                                        <div className="w-full bg-slate-50 h-2.5 rounded-full overflow-hidden border border-slate-100 p-0.5 shadow-inner">
+                                            <div 
+                                                className={`h-full rounded-full shadow-lg transition-all duration-1000 ${isComplete ? 'bg-gradient-to-r from-green-400 to-green-600' : 'bg-gradient-to-r from-orange-400 to-orange-600'}`}
+                                                style={{ width: `${progress}%` }}
+                                            ></div>
+                                        </div>
+                                        <div className="flex justify-between items-center px-1">
+                                            <p className={`text-[10px] font-black uppercase tracking-[0.2em] ${isComplete ? 'text-green-600' : 'text-orange-600'}`}>
+                                                {Math.round(progress)}% ACHIEVED
+                                            </p>
+                                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{isComplete ? 'Mission Complete' : 'Active Growth'}</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="pt-2 border-t border-slate-50">
+                                    {showFundInput === goal.goalId ? (
+                                        <div className="space-y-3 animate-in slide-in-from-top-2 duration-300 pt-2">
+                                            <div className="flex gap-1 p-1 bg-slate-50 rounded-xl">
+                                                <button onClick={() => setFundMode('ADD')} className={`flex-1 py-1.5 font-black text-[9px] uppercase tracking-widest rounded-lg transition-all ${fundMode === 'ADD' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-400'}`}>Deposit</button>
+                                                <button onClick={() => setFundMode('SUBTRACT')} className={`flex-1 py-1.5 font-black text-[9px] uppercase tracking-widest rounded-lg transition-all ${fundMode === 'SUBTRACT' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-400'}`}>Withdraw</button>
+                                            </div>
+                                            <div className="space-y-2">
+                                                <div className="relative">
+                                                    <input 
+                                                        type="text" autoFocus placeholder="0"
+                                                        value={formatDisplay(fundAmount)} 
+                                                        onChange={e => setFundAmount(cleanNum(e.target.value))}
+                                                        className="w-full bg-slate-50 border-none rounded-2xl px-6 py-3.5 font-black text-slate-900 text-xl outline-none placeholder:text-slate-100 pr-12 shadow-inner"
+                                                    />
+                                                    <button onClick={() => setShowFundInput(null)} className="absolute right-4 top-1/2 -translate-y-1/2 p-2 text-slate-300 hover:text-red-500 transition-all"><X size={16} /></button>
+                                                </div>
+                                                <button 
+                                                    onClick={() => handleFundUpdate(goal.goalId, fundAmount, fundMode === 'SUBTRACT')} 
+                                                    className="w-full py-3.5 bg-slate-900 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all hover:scale-[1.02] active:scale-95 shadow-xl shadow-slate-900/10 flex items-center justify-center gap-2"
+                                                >
+                                                    <Check size={14} /> Enter Capital
+                                                </button>
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <button 
+                                            onClick={() => { setShowFundInput(goal.goalId); setFundMode('ADD'); }}
+                                            className="w-full mt-2 py-4 bg-orange-50 text-orange-600 hover:bg-orange-600 hover:text-white rounded-[24px] font-black uppercase tracking-widest text-[10px] flex items-center justify-center gap-2 transition-all border border-orange-100/50 shadow-sm shadow-orange-100"
+                                        >
+                                            Manage Funds
+                                        </button>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    );
+                }) : (
+                    <div className="col-span-full py-20 text-center space-y-4 border border-dashed border-slate-200 rounded-[48px] bg-slate-50/30">
+                        <div className="bg-slate-100 w-16 h-16 rounded-3xl flex items-center justify-center mx-auto text-slate-300"><Target size={32} /></div>
+                        <p className="text-slate-400 font-bold text-xs uppercase tracking-[0.2em]">Dream it. Plan it. Do it.</p>
+                    </div>
+                )}
+            </div>
+
+            {isModalOpen && (
+                <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md flex items-center justify-center z-[500] p-6 animate-in fade-in duration-300">
+                    <div className="bg-white rounded-[40px] shadow-2xl w-full max-w-md overflow-hidden relative">
+                        <div className="p-8 pb-4 border-b border-slate-50 flex items-center justify-between">
+                            <h3 className="text-xl font-black text-slate-900">{isEditMode ? 'Update' : 'New'} Dream</h3>
+                            <button onClick={() => { setIsModalOpen(false); resetForm(); }} className="p-3 bg-slate-50 hover:bg-red-50 text-slate-400 hover:text-red-500 rounded-2xl transition-all"><X size={20} /></button>
+                        </div>
+                        <form onSubmit={handleSubmit} className="p-8 pt-4 space-y-6 max-h-[80vh] overflow-y-auto">
+                            <div className="space-y-1 px-1">
+                                <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Goal Name</label>
+                                <input type="text" required value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} className="w-full bg-slate-50 border-none rounded-2xl px-6 py-4 font-bold text-slate-900 focus:ring-2 focus:ring-orange-500/20" placeholder="e.g. Dream House" />
+                            </div>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-1">
+                                    <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Target (đ)</label>
+                                    <input 
+                                        type="text" required 
+                                        value={formatDisplay(formData.targetAmount)} 
+                                        onChange={e => setFormData({...formData, targetAmount: cleanNum(e.target.value)})} 
+                                        className="w-full bg-slate-50 border-none rounded-2xl px-6 py-4 font-bold text-slate-900 focus:ring-2 focus:ring-orange-500/20" 
+                                    />
+                                </div>
+                                <div className="space-y-1">
+                                    <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Current (đ)</label>
+                                    <input 
+                                        type="text" required 
+                                        value={formatDisplay(formData.currentAmount)} 
+                                        onChange={e => setFormData({...formData, currentAmount: cleanNum(e.target.value)})} 
+                                        className="w-full bg-slate-50 border-none rounded-2xl px-6 py-4 font-bold text-slate-900 focus:ring-2 focus:ring-orange-500/20" 
+                                    />
+                                </div>
+                            </div>
+                            <div className="space-y-1">
+                                <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Visual Inspiration</label>
+                                <div className="flex gap-4">
+                                    <div className="relative w-16 h-16 bg-slate-50 rounded-2xl overflow-hidden border-2 border-dashed border-slate-200 flex items-center justify-center shrink-0">
+                                        {formData.imageUrl ? <img src={formData.imageUrl} className="w-full h-full object-cover" /> : <Plus size={20} className="text-slate-300" />}
+                                        <input type="file" accept="image/*" onChange={handleFileUpload} className="absolute inset-0 opacity-0 cursor-pointer" />
+                                    </div>
+                                    <input type="text" placeholder="Or URL..." value={formData.imageUrl} onChange={e => setFormData({...formData, imageUrl: e.target.value})} className="flex-1 bg-slate-50 border-none rounded-2xl px-6 py-4 font-bold text-slate-900 focus:ring-2 focus:ring-orange-500/20 text-xs" />
+                                </div>
+                            </div>
+                            <button type="submit" className="w-full bg-slate-900 text-white font-black py-5 rounded-2xl shadow-xl hover:scale-[1.02] active:scale-95 transition-all uppercase tracking-widest text-xs mt-4">
+                                {isEditMode ? 'Update Objective' : 'Commit Objective'}
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            )}
         </div>
-      )}
-    </div>
-  );
-}
+    );
+};
+
+export default Goals;

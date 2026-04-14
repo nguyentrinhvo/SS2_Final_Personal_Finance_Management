@@ -1,5 +1,5 @@
+import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { useState } from 'react';
 import {
   LayoutDashboard,
   ArrowLeftRight,
@@ -7,12 +7,11 @@ import {
   PieChart,
   Target,
   FileText,
-  User,
-  LogOut,
   Briefcase,
-  ChevronLeft,
-  ChevronRight,
-  LayoutGrid
+  LayoutGrid,
+  LogOut,
+  User,
+  Settings
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -26,45 +25,35 @@ const menuItems = [
   { name: 'Reports', path: '/dashboard/reports', icon: FileText },
 ];
 
-
-export default function Sidebar({ isCollapsed, setIsCollapsed }) {
+export default function Sidebar() {
   const location = useLocation();
   const navigate = useNavigate();
-  const [showProfileMenu, setShowProfileMenu] = useState(false);
+  
   const fullName = localStorage.getItem('fullName') || 'User';
-  const email = localStorage.getItem('email') || 'user@finance.com'; // I didn't store email yet, let's fix login to store email too.
+  const email = localStorage.getItem('email') || 'user@finance.com';
+  const avatarUrl = localStorage.getItem('avatarUrl') || '';
 
   const handleLogout = () => {
+    localStorage.clear();
     toast.success('Logged out successfully');
-    navigate('/');
+    navigate('/login');
   };
 
   return (
-    <aside className={`${isCollapsed ? 'w-24' : 'w-72'} bg-white flex flex-col hidden lg:flex h-screen sticky top-0 border-r border-slate-100 overflow-visible transition-all duration-300 relative z-50`}>
-      {/* Toggle Button */}
-      <button 
-        onClick={() => setIsCollapsed(!isCollapsed)}
-        className="absolute -right-3 top-10 bg-white border border-slate-200 text-slate-500 rounded-lg p-1 hover:text-orange-600 hover:border-orange-200 transition-all shadow-sm z-[60]"
-      >
-        {isCollapsed ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
-      </button>
-
+    <aside className="w-[260px] bg-white flex flex-col h-full border-r border-slate-100 transition-all duration-300 relative z-50">
       {/* Top Section: Logo */}
-      <div className="p-8 pb-6 flex justify-center">
-        <div className={`flex items-center gap-3 group cursor-pointer ${isCollapsed ? 'justify-center' : ''}`}>
-          <div className="bg-orange-600 p-2.5 rounded-2xl shadow-lg shadow-orange-600/20 shrink-0">
-            <Briefcase size={22} className="text-white" />
+      <div className="p-6 pb-8 flex justify-center">
+        <div className="flex items-center gap-3 group cursor-pointer">
+          <div className="bg-orange-600 p-2.5 rounded-xl shadow-xl shadow-orange-600/20 shrink-0 transform group-hover:rotate-12 transition-transform">
+            <Briefcase size={20} className="text-white" />
           </div>
-          {!isCollapsed && (
-            <div>
-              <span className="text-xl font-bold text-slate-800 tracking-tight block">FinFlow</span>
-              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest -mt-0.5">Finance Tracker</p>
-            </div>
-          )}
+          <div>
+            <span className="text-xl font-black text-slate-900 tracking-tighter block leading-none">FinFlow</span>
+          </div>
         </div>
       </div>
 
-      <nav className="flex-1 px-4 pt-4 space-y-2">
+      <nav className="flex-1 px-3 space-y-1">
         {menuItems.map((item) => {
           const Icon = item.icon;
           const isActive = location.pathname === item.path;
@@ -72,62 +61,55 @@ export default function Sidebar({ isCollapsed, setIsCollapsed }) {
             <Link
               key={item.path}
               to={item.path}
-              className={`flex items-center ${isCollapsed ? 'justify-center' : 'gap-4'} py-3 px-4 rounded-2xl transition-all duration-300 group ${isActive
-                ? 'bg-orange-600 text-white shadow-lg shadow-orange-600/20 font-bold'
-                : 'text-slate-500 hover:text-orange-600 hover:bg-orange-50 font-semibold'
+              className={`flex items-center gap-3 py-2.5 px-4 rounded-xl transition-all duration-500 group relative ${isActive
+                ? 'bg-slate-900 text-white shadow-2xl shadow-slate-900/20 font-black'
+                : 'text-slate-500 hover:text-orange-600 hover:bg-orange-50 font-bold'
                 }`}
-              title={isCollapsed ? item.name : ''}
             >
-              <Icon size={20} className={isActive ? 'text-white' : 'text-slate-400 group-hover:text-orange-600'} />
-              {!isCollapsed && <span className="text-[15px]">{item.name}</span>}
+              <Icon size={18} className={isActive ? 'text-orange-500' : 'text-slate-400 group-hover:text-orange-600 transition-colors'} />
+              <span className="text-[13px]">{item.name}</span>
+              {isActive && <div className="absolute right-4 size-1.5 bg-orange-600 rounded-full animate-pulse"></div>}
             </Link>
           );
         })}
       </nav>
 
-      {!isCollapsed && (
-        <div className="p-4 space-y-2 border-t border-slate-50 bg-white mt-auto relative">
-          {showProfileMenu && (
-            <div className="absolute bottom-full left-4 right-4 mb-2 bg-white rounded-xl shadow-lg border border-slate-100 py-2 z-50">
-              <button 
-                onClick={() => { setShowProfileMenu(false); navigate('/profile'); }}
-                className="w-full flex items-center gap-3 px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-50 hover:text-orange-600 transition-colors"
-              >
-                <User size={16} />
-                Profile
-              </button>
-              <button 
-                onClick={handleLogout}
-                className="w-full flex items-center gap-3 px-4 py-2 text-sm font-semibold text-red-500 hover:bg-red-50 transition-colors"
-              >
-                <LogOut size={16} />
-                Logout
-              </button>
-            </div>
-          )}
-          <div className="pt-2">
+      {/* User & Logout Section at Bottom */}
+      <div className="p-4 border-t border-slate-50 space-y-3">
+        <button 
+          onClick={handleLogout}
+          className="w-full flex items-center gap-3 py-3 px-4 rounded-xl text-slate-500 hover:text-red-600 hover:bg-red-50 font-bold transition-all duration-300 group"
+        >
+          <LogOut size={18} className="text-slate-400 group-hover:text-red-500 transition-colors" />
+          <span className="text-[13px]">Log Out</span>
+        </button>
+
+        <Link 
+          to="/dashboard/profile"
+          className="w-full flex items-center gap-3 p-2 rounded-2xl bg-slate-50 border border-transparent hover:border-orange-200 hover:bg-white hover:shadow-lg transition-all duration-500 group"
+        >
+          <div className="relative shrink-0">
+            {avatarUrl ? (
+              <img
+                src={avatarUrl}
+                className="w-10 h-10 rounded-xl object-cover border-2 border-white shadow-sm"
+                alt="Profile"
+                onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }}
+              />
+            ) : null}
             <div 
-              onClick={() => setShowProfileMenu(!showProfileMenu)}
-              className="p-3 bg-slate-50/50 rounded-3xl border border-slate-100/50 flex flex-col items-center gap-3 group cursor-pointer transition-all hover:bg-white hover:shadow-xl hover:shadow-slate-200/50"
+              className={`w-10 h-10 rounded-xl bg-orange-100 items-center justify-center text-orange-600 font-black text-[14px] ${avatarUrl ? 'hidden' : 'flex'}`}
             >
-              <div className="flex items-center gap-3 w-full">
-                <div className="relative flex-shrink-0">
-                  <img
-                    src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1-auto-format"
-                    className="w-10 h-10 rounded-full object-cover"
-                    alt="user"
-                  />
-                  <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-green-500 border-2 border-white rounded-full shadow-sm"></div>
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-black text-slate-900 break-words whitespace-normal leading-tight">{fullName}</p>
-                  <p className="text-[11px] font-medium text-slate-500 break-words whitespace-normal">{email}</p>
-                </div>
-              </div>
+              {fullName.charAt(0)}
             </div>
+            <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-green-500 border-2 border-white rounded-full shadow-sm"></div>
           </div>
-        </div>
-      )}
+          <div className="min-w-0 pr-2">
+            <p className="text-[13px] font-black text-slate-900 truncate leading-none mb-1 group-hover:text-orange-600 transition-colors">{fullName}</p>
+            <p className="text-[10px] font-bold text-slate-400 truncate leading-none opacity-80">{email}</p>
+          </div>
+        </Link>
+      </div>
     </aside>
   );
 }
