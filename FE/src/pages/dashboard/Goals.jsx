@@ -89,6 +89,7 @@ const Goals = () => {
             setIsModalOpen(false);
             resetForm();
             fetchGoals();
+            window.dispatchEvent(new Event('transactionRefresh'));
             toast.success(isEditMode ? 'Updated' : 'Created');
         } catch (error) {
             toast.error('Operation failed');
@@ -128,6 +129,7 @@ const Goals = () => {
             setShowFundInput(null);
             setFundAmount('');
             fetchGoals();
+            window.dispatchEvent(new Event('transactionRefresh'));
         } catch (error) {
             toast.error('Failed');
         }
@@ -139,8 +141,20 @@ const Goals = () => {
             await axios.delete(`${GOAL_API}/${id}`);
             toast.success('Removed');
             fetchGoals();
+            window.dispatchEvent(new Event('transactionRefresh'));
         } catch (error) {
             toast.error('Failed');
+        }
+    };
+
+    const handleComplete = async (id, name) => {
+        try {
+            await axios.delete(`${GOAL_API}/${id}`);
+            toast.success(`🎉 "${name}" completed! Congratulations!`, { duration: 4000 });
+            fetchGoals();
+            window.dispatchEvent(new Event('transactionRefresh'));
+        } catch (error) {
+            toast.error('Failed to complete goal');
         }
     };
 
@@ -234,7 +248,14 @@ const Goals = () => {
                                 </div>
 
                                 <div className="pt-2 border-t border-slate-50">
-                                    {showFundInput === goal.goalId ? (
+                                    {isComplete ? (
+                                        <button 
+                                            onClick={() => handleComplete(goal.goalId, goal.name)}
+                                            className="w-full mt-2 py-4 bg-green-50 text-green-600 hover:bg-green-600 hover:text-white rounded-[24px] font-black uppercase tracking-widest text-[10px] flex items-center justify-center gap-2 transition-all border border-green-100/50 shadow-sm shadow-green-100 group"
+                                        >
+                                            <Check size={16} className="group-hover:scale-125 transition-transform" /> Complete Goal
+                                        </button>
+                                    ) : showFundInput === goal.goalId ? (
                                         <div className="space-y-3 animate-in slide-in-from-top-2 duration-300 pt-2">
                                             <div className="flex gap-1 p-1 bg-slate-50 rounded-xl">
                                                 <button onClick={() => setFundMode('ADD')} className={`flex-1 py-1.5 font-black text-[9px] uppercase tracking-widest rounded-lg transition-all ${fundMode === 'ADD' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-400'}`}>Deposit</button>

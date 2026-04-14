@@ -99,7 +99,7 @@ export default function Navbar({ toggleMobileMenu }) {
             }
         });
 
-        setNotifications(newNotifs);
+        setNotifications(newNotifs.reverse());
 
         const viewedStr = localStorage.getItem('viewedNotifications') || '[]';
         const viewedIds = JSON.parse(viewedStr);
@@ -112,14 +112,8 @@ export default function Navbar({ toggleMobileMenu }) {
     };
     fetchNotifications();
 
-    // Auto-refresh notifications every second
-    const interval = setInterval(fetchNotifications, 1000);
-
     window.addEventListener('transactionRefresh', fetchNotifications);
-    return () => {
-      clearInterval(interval);
-      window.removeEventListener('transactionRefresh', fetchNotifications);
-    };
+    return () => window.removeEventListener('transactionRefresh', fetchNotifications);
   }, [userId]);
 
   const handleOpenDropdown = () => {

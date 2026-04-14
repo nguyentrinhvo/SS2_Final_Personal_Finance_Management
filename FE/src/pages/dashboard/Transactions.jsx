@@ -112,6 +112,7 @@ export default function Transactions() {
       
       setIsModalOpen(false);
       fetchData();
+      window.dispatchEvent(new Event('transactionRefresh'));
     } catch (error) {
       toast.error('Failed');
     }
@@ -123,6 +124,7 @@ export default function Transactions() {
       await axios.delete(`${TRX_API}/${id}`);
       toast.success('Deleted');
       fetchData();
+      window.dispatchEvent(new Event('transactionRefresh'));
     } catch (error) {
       toast.error('Failed');
     }

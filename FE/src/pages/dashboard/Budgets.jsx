@@ -79,6 +79,7 @@ export default function Budgets() {
       setIsModalOpen(false);
       resetForm();
       fetchData();
+      window.dispatchEvent(new Event('transactionRefresh'));
     } catch (err) {
       toast.error('Operation failed');
     }
@@ -107,6 +108,7 @@ export default function Budgets() {
       await axios.delete(`${API_BUDGETS}/${id}`);
       toast.success('Deleted');
       fetchData();
+      window.dispatchEvent(new Event('transactionRefresh'));
     } catch (err) {
       toast.error('Failed to delete');
     }
