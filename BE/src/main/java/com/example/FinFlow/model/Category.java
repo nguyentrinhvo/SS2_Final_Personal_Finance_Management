@@ -23,6 +23,9 @@ public class Category {
     @Enumerated(EnumType.STRING)
     private TransactionType type;
 
+    @Column(name = "image_url", columnDefinition = "TEXT")
+    private String imageUrl;
+
     @ManyToOne
     @JoinColumn(name = "user_id") // Nullable if default category
     @JsonIgnore

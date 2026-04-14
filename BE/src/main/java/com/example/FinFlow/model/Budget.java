@@ -24,6 +24,9 @@ public class Budget {
 
     private Integer year;
 
+    @Column(name = "image_url", columnDefinition = "TEXT")
+    private String imageUrl;
+
     @ManyToOne
     @JoinColumn(name = "user_id")
     @JsonIgnore

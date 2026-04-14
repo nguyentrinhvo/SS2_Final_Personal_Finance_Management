@@ -33,6 +33,7 @@ public class AccountService {
             account.setAccountName(accountDetails.getAccountName());
             account.setAccountType(accountDetails.getAccountType());
             account.setBalance(accountDetails.getBalance() != null ? accountDetails.getBalance() : BigDecimal.ZERO);
+            account.setImageUrl(accountDetails.getImageUrl());
             account.setCreatedAt(LocalDateTime.now());
             return accountRepository.save(account);
         }
@@ -61,6 +62,9 @@ public class AccountService {
             account.setAccountType(details.getAccountType());
             if (details.getBalance() != null) {
                 account.setBalance(details.getBalance());
+            }
+            if (details.getImageUrl() != null) {
+                account.setImageUrl(details.getImageUrl());
             }
             return accountRepository.save(account);
         }

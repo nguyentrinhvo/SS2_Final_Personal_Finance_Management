@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import toast from 'react-hot-toast';
-import { Plus, Trash2, Edit, TrendingUp, AlertCircle, X, Check, Wallet, PieChart, MoreHorizontal } from 'lucide-react';
+import { Plus, Trash2, Edit, TrendingUp, AlertCircle, X, Check, Wallet, PieChart, MoreHorizontal, UploadCloud } from 'lucide-react';
 
 const API_BUDGETS = 'http://localhost:8080/api/budgets';
 const API_CATEGORIES = 'http://localhost:8080/api/categories/user';
@@ -19,8 +19,10 @@ export default function Budgets() {
 
   const [formData, setFormData] = useState({
     categoryId: '',
-    amountLimit: ''
+    amountLimit: '',
+    imageUrl: ''
   });
+  const [isUploading, setIsUploading] = useState(false);
 
   // Helper to format string with dots for UI
   const formatDisplay = (val) => {
@@ -57,6 +59,28 @@ export default function Budgets() {
     fetchData();
   }, [userId]);
 
+  const handleImageUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const uploadData = new FormData();
+    uploadData.append('file', file);
+    setIsUploading(true);
+    const loadingToast = toast.loading('Uploading image...');
+
+    try {
+      const res = await axios.post('http://localhost:8080/api/files/upload', uploadData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      setFormData(prev => ({ ...prev, imageUrl: res.data.url }));
+      toast.success('Image uploaded!', { id: loadingToast });
+    } catch (err) {
+      toast.error('Failed to upload image', { id: loadingToast });
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!formData.categoryId) {
@@ -66,7 +90,8 @@ export default function Budgets() {
     try {
       const payload = {
         category: { categoryId: parseInt(formData.categoryId) },
-        amountLimit: parseFloat(cleanNum(formData.amountLimit))
+        amountLimit: parseFloat(cleanNum(formData.amountLimit)),
+        imageUrl: formData.imageUrl
       };
 
       if (isEditMode) {
@@ -88,7 +113,8 @@ export default function Budgets() {
   const handleEdit = (budget) => {
     setFormData({
       categoryId: budget.category?.categoryId.toString(),
-      amountLimit: budget.amountLimit.toString()
+      amountLimit: budget.amountLimit.toString(),
+      imageUrl: budget.imageUrl || ''
     });
     setEditingBudgetId(budget.budgetId);
     setIsEditMode(true);
@@ -96,7 +122,7 @@ export default function Budgets() {
   };
 
   const resetForm = () => {
-    setFormData({ categoryId: '', amountLimit: '' });
+    setFormData({ categoryId: '', amountLimit: '', imageUrl: '' });
     setIsEditMode(false);
     setEditingBudgetId(null);
     setIsModalOpen(false);
@@ -155,9 +181,15 @@ export default function Budgets() {
             return (
               <div key={b.budgetId} className="bg-white p-8 rounded-[40px] border border-slate-100 shadow-sm space-y-6 flex flex-col hover:shadow-xl transition-all duration-300 group">
                 <div className="flex justify-between items-start">
-                  <div className={`p-3.5 rounded-2xl ${isOver ? 'bg-red-50 text-red-600' : 'bg-orange-50 text-orange-600'}`}>
-                    <PieChart size={24} />
-                  </div>
+                  {b.imageUrl ? (
+                    <div className="size-14 rounded-2xl overflow-hidden shadow-sm flex items-center justify-center border border-slate-100">
+                      <img src={b.imageUrl} alt="Budget Cover" className="w-full h-full object-cover" />
+                    </div>
+                  ) : (
+                    <div className={`p-3.5 rounded-2xl ${isOver ? 'bg-red-50 text-red-600' : 'bg-orange-50 text-orange-600'}`}>
+                      <PieChart size={24} />
+                    </div>
+                  )}
                   <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                     <button onClick={() => handleEdit(b)} className="p-2 text-slate-400 hover:text-orange-600 hover:bg-orange-50 rounded-xl transition-all"><Edit size={16} /></button>
                     <button onClick={() => handleDelete(b.budgetId)} className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all"><Trash2 size={16} /></button>
@@ -241,6 +273,24 @@ export default function Budgets() {
                     className="w-full bg-slate-50 border-none rounded-2xl px-6 py-4 font-bold text-slate-900 focus:ring-2 focus:ring-orange-500/20"
                     placeholder="e.g. 1.000.000"
                   />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Cover Image URL or Upload</label>
+                  <div className="flex gap-2">
+                    <input 
+                      type="text"
+                      value={formData.imageUrl}
+                      onChange={e => setFormData({...formData, imageUrl: e.target.value})}
+                      className="flex-1 min-w-0 bg-slate-50 border-none rounded-2xl px-6 py-4 font-bold text-slate-900 focus:ring-2 focus:ring-orange-500/20 text-sm"
+                      placeholder="https://..."
+                    />
+                    <label className="shrink-0 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold px-6 py-4 rounded-[16px] cursor-pointer transition-colors flex items-center justify-center text-[10px] uppercase tracking-widest relative overflow-hidden group">
+                        {isUploading ? '...' : (
+                            <div className="flex items-center gap-2"><UploadCloud size={14}/> Upload</div>
+                        )}
+                        <input type="file" accept="image/*" className="hidden" onChange={handleImageUpload} disabled={isUploading} />
+                    </label>
+                  </div>
                 </div>
                 <button type="submit" className="w-full bg-slate-900 text-white font-black py-5 rounded-2xl shadow-xl shadow-slate-900/20 hover:scale-[1.02] active:scale-95 transition-all">
                   {isEditMode ? 'Update' : 'Confirm'} Limit

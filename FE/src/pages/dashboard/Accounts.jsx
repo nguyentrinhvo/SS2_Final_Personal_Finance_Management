@@ -16,7 +16,8 @@ import {
   Plane,
   Trash2,
   Edit,
-  X
+  X,
+  UploadCloud
 } from 'lucide-react';
 
 const API_BASE_URL = 'http://localhost:8080/api/accounts';
@@ -33,8 +34,10 @@ export default function Accounts() {
   const [formData, setFormData] = useState({
     accountName: '',
     accountType: 'BANK',
-    balance: ''
+    balance: '',
+    imageUrl: ''
   });
+  const [isUploading, setIsUploading] = useState(false);
   const userId = localStorage.getItem('userId');
 
   // Helper for dots
@@ -74,6 +77,28 @@ export default function Accounts() {
     fetchTransactions();
   }, [userId]);
 
+  const handleImageUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const uploadData = new FormData();
+    uploadData.append('file', file);
+    setIsUploading(true);
+    const loadingToast = toast.loading('Uploading image...');
+
+    try {
+      const res = await axios.post('http://localhost:8080/api/files/upload', uploadData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      setFormData(prev => ({ ...prev, imageUrl: res.data.url }));
+      toast.success('Image uploaded!', { id: loadingToast });
+    } catch (err) {
+      toast.error('Failed to upload image', { id: loadingToast });
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!userId) return;
@@ -83,14 +108,16 @@ export default function Accounts() {
         await axios.put(`${API_BASE_URL}/${editingAccount.accountId}`, {
           accountName: formData.accountName,
           accountType: formData.accountType,
-          balance: parseFloat(cleanNum(formData.balance)) || 0
+          balance: parseFloat(cleanNum(formData.balance)) || 0,
+          imageUrl: formData.imageUrl
         });
         toast.success('Account updated!');
       } else {
         await axios.post(`${API_BASE_URL}/user/${userId}`, {
           accountName: formData.accountName,
           accountType: formData.accountType,
-          balance: parseFloat(cleanNum(formData.balance)) || 0
+          balance: parseFloat(cleanNum(formData.balance)) || 0,
+          imageUrl: formData.imageUrl
         });
         toast.success('Account created!');
       }
@@ -119,11 +146,12 @@ export default function Accounts() {
       setFormData({
         accountName: account.accountName,
         accountType: account.accountType,
-        balance: account.balance.toString()
+        balance: account.balance.toString(),
+        imageUrl: account.imageUrl || ''
       });
     } else {
       setEditingAccount(null);
-      setFormData({ accountName: '', accountType: 'BANK', balance: '' });
+      setFormData({ accountName: '', accountType: 'BANK', balance: '', imageUrl: '' });
     }
     setIsModalOpen(true);
   };
@@ -210,9 +238,15 @@ export default function Accounts() {
           <div key={account.accountId} className="bg-white p-8 rounded-[40px] border border-slate-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group relative flex flex-col justify-between">
             <div>
                 <div className="flex justify-between items-start mb-8">
-                <div className={`p-4 rounded-2xl flex items-center justify-center border transition-all duration-500 group-hover:scale-110 ${getAccountColors(account.accountType)}`}>
-                    {getAccountIcon(account.accountType)}
-                </div>
+                {account.imageUrl ? (
+                  <div className="size-16 rounded-3xl overflow-hidden shadow-sm flex items-center justify-center border border-slate-100 transition-all duration-500 group-hover:scale-110">
+                    <img src={account.imageUrl} alt={account.accountName} className="w-full h-full object-cover" />
+                  </div>
+                ) : (
+                  <div className={`p-4 rounded-2xl flex items-center justify-center border transition-all duration-500 group-hover:scale-110 ${getAccountColors(account.accountType)}`}>
+                      {getAccountIcon(account.accountType)}
+                  </div>
+                )}
                 
                 <div className="relative">
                     <button 
@@ -325,6 +359,24 @@ export default function Accounts() {
                     className="w-full bg-slate-50 border-none rounded-[28px] px-8 py-6 focus:outline-none focus:ring-4 focus:ring-orange-500/10 transition-all font-black text-2xl text-slate-900"
                     placeholder="0"
                   />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Cover Image URL or Upload</label>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={formData.imageUrl}
+                    onChange={(e) => setFormData({...formData, imageUrl: e.target.value})}
+                    className="flex-1 min-w-0 bg-slate-50 border-none rounded-[20px] px-6 py-4 focus:outline-none focus:ring-4 focus:ring-orange-500/10 transition-all font-bold text-slate-900 placeholder:text-slate-300 text-sm"
+                    placeholder="https://..."
+                  />
+                  <label className="shrink-0 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold px-6 py-4 rounded-[20px] cursor-pointer transition-colors flex items-center justify-center text-[10px] uppercase tracking-widest relative overflow-hidden group">
+                      {isUploading ? '...' : (
+                          <div className="flex items-center gap-2"><UploadCloud size={14}/> Upload</div>
+                      )}
+                      <input type="file" accept="image/*" className="hidden" onChange={handleImageUpload} disabled={isUploading} />
+                  </label>
                 </div>
               </div>
               <button

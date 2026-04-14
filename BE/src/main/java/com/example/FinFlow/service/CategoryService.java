@@ -18,7 +18,7 @@ public class CategoryService {
 
     @Autowired
     private CategoryRepository categoryRepository;
-    
+
     @Autowired
     private UserRepository userRepository;
 
@@ -26,15 +26,14 @@ public class CategoryService {
     public void seedCategories() {
         if (categoryRepository.count() == 0) {
             List<Category> defaultCategories = Arrays.asList(
-                new Category(null, "Food", TransactionType.EXPENSE, null, null),
-                new Category(null, "Transport", TransactionType.EXPENSE, null, null),
-                new Category(null, "Rent", TransactionType.EXPENSE, null, null),
-                new Category(null, "Shopping", TransactionType.EXPENSE, null, null),
-                new Category(null, "Utilities", TransactionType.EXPENSE, null, null),
-                new Category(null, "Salary", TransactionType.INCOME, null, null),
-                new Category(null, "Business", TransactionType.INCOME, null, null),
-                new Category(null, "Gift", TransactionType.INCOME, null, null)
-            );
+                    new Category(null, "Fooad", TransactionType.EXPENSE, null, null, null),
+                    new Category(null, "Transport", TransactionType.EXPENSE, null, null, null),
+                    new Category(null, "Rent", TransactionType.EXPENSE, null, null, null),
+                    new Category(null, "Shopping", TransactionType.EXPENSE, null, null, null),
+                    new Category(null, "Utilities", TransactionType.EXPENSE, null, null, null),
+                    new Category(null, "Salary", TransactionType.INCOME, null, null, null),
+                    new Category(null, "Business", TransactionType.INCOME, null, null, null),
+                    new Category(null, "Gift", TransactionType.INCOME, null, null, null));
             categoryRepository.saveAll(defaultCategories);
         }
     }
@@ -49,6 +48,7 @@ public class CategoryService {
             Category category = new Category();
             category.setName(details.getName());
             category.setType(details.getType());
+            category.setImageUrl(details.getImageUrl());
             category.setUser(user.get());
             return categoryRepository.save(category);
         }
@@ -57,5 +57,18 @@ public class CategoryService {
 
     public void deleteCategory(Long id) {
         categoryRepository.deleteById(id);
+    }
+    
+    public Category updateCustomCategory(Long id, Category details) {
+        Optional<Category> categoryOptional = categoryRepository.findById(id);
+        if (categoryOptional.isPresent()) {
+            Category category = categoryOptional.get();
+            // Don't modify user ownership or core flag, just properties
+            if (details.getName() != null) category.setName(details.getName());
+            if (details.getType() != null) category.setType(details.getType());
+            category.setImageUrl(details.getImageUrl());
+            return categoryRepository.save(category);
+        }
+        return null;
     }
 }

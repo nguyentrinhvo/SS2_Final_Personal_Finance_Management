@@ -33,5 +33,6 @@ public class Goal {
     @JsonIgnore
     private User user;
 
+    @Column(name = "image_url", columnDefinition = "TEXT")
     private String imageUrl;
 }

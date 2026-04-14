@@ -50,6 +50,7 @@ public class BudgetController {
 
             entityToSave.setUser(user);
             entityToSave.setAmountLimit(budget.getAmountLimit());
+            entityToSave.setImageUrl(budget.getImageUrl());
             
             // Resolve category if provided
             if (budget.getCategory() != null && budget.getCategory().getCategoryId() != null) {

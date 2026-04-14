@@ -23,7 +23,8 @@ import {
   ArrowRight,
   Target,
   Activity,
-  CheckCircle2
+  CheckCircle2,
+  UploadCloud
 } from 'lucide-react';
 
 const CAT_API = 'http://localhost:8080/api/categories';
@@ -35,7 +36,10 @@ export default function Categories() {
   const [transactions, setTransactions] = useState([]);
   const [budgets, setBudgets] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [formData, setFormData] = useState({ name: '', type: 'EXPENSE' });
+  const [formData, setFormData] = useState({ name: '', type: 'EXPENSE', imageUrl: '' });
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [editingCatId, setEditingCatId] = useState(null);
+  const [isUploading, setIsUploading] = useState(false);
   const userId = localStorage.getItem('userId');
 
   const fetchData = async () => {
@@ -59,17 +63,56 @@ export default function Categories() {
     fetchData();
   }, [userId]);
 
+  const handleImageUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const uploadData = new FormData();
+    uploadData.append('file', file);
+    setIsUploading(true);
+    const loadingToast = toast.loading('Uploading image...');
+
+    try {
+      const res = await axios.post('http://localhost:8080/api/files/upload', uploadData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      setFormData(prev => ({ ...prev, imageUrl: res.data.url }));
+      toast.success('Image uploaded!', { id: loadingToast });
+    } catch (err) {
+      toast.error('Failed to upload image', { id: loadingToast });
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await axios.post(`${CAT_API}/user/${userId}`, formData);
-      toast.success('Category architecture updated!');
+      if (isEditMode) {
+        await axios.put(`${CAT_API}/${editingCatId}`, formData);
+      } else {
+        await axios.post(`${CAT_API}/user/${userId}`, formData);
+      }
+      toast.success(isEditMode ? 'Category updated!' : 'Category architecture updated!');
       setIsModalOpen(false);
-      setFormData({ name: '', type: 'EXPENSE' });
+      setFormData({ name: '', type: 'EXPENSE', imageUrl: '' });
+      setIsEditMode(false);
+      setEditingCatId(null);
       fetchData();
     } catch (err) {
       toast.error('Failed to create category');
     }
+  };
+
+  const handleEditClick = (cat) => {
+    setFormData({
+      name: cat.name,
+      type: cat.type,
+      imageUrl: cat.imageUrl || ''
+    });
+    setEditingCatId(cat.categoryId);
+    setIsEditMode(true);
+    setIsModalOpen(true);
   };
 
   const handleDelete = async (id) => {
@@ -132,7 +175,12 @@ export default function Categories() {
       
       <section className="flex justify-end">
         <button 
-          onClick={() => setIsModalOpen(true)}
+          onClick={() => {
+            setFormData({ name: '', type: 'EXPENSE', imageUrl: '' });
+            setIsEditMode(false);
+            setEditingCatId(null);
+            setIsModalOpen(true);
+          }}
           className="bg-slate-900 text-white font-black px-8 py-4 rounded-2xl shadow-xl shadow-slate-900/10 flex items-center gap-3 transition-all hover:scale-[1.02] active:scale-95 group shrink-0 text-sm uppercase tracking-widest"
         >
           <PlusCircle size={20} className="group-hover:rotate-90 transition-transform" />
@@ -149,17 +197,31 @@ export default function Categories() {
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {coreCategories.map(cat => (
-                <div key={cat.categoryId} className="group bg-white p-6 rounded-[32px] border border-slate-50 flex items-center gap-6 transition-all hover:shadow-xl hover:border-orange-100">
-                  <div className={`size-14 rounded-2xl flex items-center justify-center shrink-0 transition-all group-hover:scale-110 shadow-sm ${
-                    cat.type === 'INCOME' ? 'bg-green-50 text-green-600' : 'bg-slate-50 text-slate-600 group-hover:bg-orange-600 group-hover:text-white'
-                  }`}>
-                    {React.cloneElement(getIcon(cat.name), { size: 24 })}
-                  </div>
+                <div key={cat.categoryId} className="group relative bg-white p-6 rounded-[32px] border border-slate-50 flex items-center gap-6 transition-all hover:shadow-xl hover:border-orange-100">
+                  {cat.imageUrl ? (
+                    <div className="size-14 rounded-2xl overflow-hidden shadow-sm flex items-center justify-center border border-slate-100 shrink-0 transition-all group-hover:scale-110">
+                      <img src={cat.imageUrl} alt={cat.name} className="w-full h-full object-cover" />
+                    </div>
+                  ) : (
+                    <div className={`size-14 rounded-2xl flex items-center justify-center shrink-0 transition-all group-hover:scale-110 shadow-sm ${
+                      cat.type === 'INCOME' ? 'bg-green-50 text-green-600' : 'bg-slate-50 text-slate-600 group-hover:bg-orange-600 group-hover:text-white'
+                    }`}>
+                      {React.cloneElement(getIcon(cat.name), { size: 24 })}
+                    </div>
+                  )}
                   <div className="flex-1 min-w-0">
                     <div className="flex justify-between items-baseline">
                       <h3 className="font-black text-slate-800 truncate uppercase tracking-tight">{cat.name}</h3>
                     </div>
                     <div className="text-xl font-black text-slate-900 tracking-tighter">{getCategorySpending(cat.categoryId).toLocaleString()} đ</div>
+                  </div>
+                  <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button 
+                      onClick={() => handleEditClick(cat)}
+                      className="p-2.5 bg-white/80 backdrop-blur-md rounded-xl text-slate-400 hover:text-orange-600 border border-slate-100 shadow-sm transition-all"
+                    >
+                      <Edit size={14} />
+                    </button>
                   </div>
                 </div>
               ))}
@@ -181,9 +243,15 @@ export default function Categories() {
                 customCategories.map(cat => (
                   <div key={cat.categoryId} className="flex items-center justify-between p-5 bg-white rounded-[28px] shadow-sm group hover:shadow-xl transition-all border border-transparent">
                     <div className="flex items-center gap-4">
-                      <div className="size-12 bg-slate-50 rounded-xl flex items-center justify-center text-slate-300 group-hover:bg-slate-900 group-hover:text-white transition-all shadow-inner">
-                        {getIcon(cat.name)}
-                      </div>
+                      {cat.imageUrl ? (
+                        <div className="size-12 rounded-xl overflow-hidden shadow-inner flex items-center justify-center border border-slate-100 group-hover:scale-110 transition-all">
+                          <img src={cat.imageUrl} alt={cat.name} className="w-full h-full object-cover" />
+                        </div>
+                      ) : (
+                        <div className="size-12 bg-slate-50 rounded-xl flex items-center justify-center text-slate-300 group-hover:bg-slate-900 group-hover:text-white transition-all shadow-inner">
+                          {getIcon(cat.name)}
+                        </div>
+                      )}
                       <div>
                         <h4 className="font-black text-slate-900 uppercase tracking-tight">{cat.name}</h4>
                         <p className="text-[9px] text-slate-300 font-black uppercase tracking-widest">{cat.type}</p>
@@ -194,12 +262,20 @@ export default function Categories() {
                         <div className="font-black text-slate-900">{getCategorySpending(cat.categoryId).toLocaleString()} đ</div>
                         <div className="text-[8px] font-bold text-slate-300 uppercase tracking-tighter">{getTransactionCount(cat.categoryId)} ENTRIES</div>
                       </div>
-                      <button 
-                        onClick={() => handleDelete(cat.categoryId)}
-                        className="p-2.5 hover:bg-red-50 rounded-xl text-slate-200 hover:text-red-500 transition-all opacity-0 group-hover:opacity-100"
-                      >
-                        <Trash2 size={16} />
-                      </button>
+                      <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button 
+                          onClick={() => handleEditClick(cat)}
+                          className="p-2.5 hover:bg-orange-50 rounded-xl text-slate-200 hover:text-orange-600 transition-all"
+                        >
+                          <Edit size={16} />
+                        </button>
+                        <button 
+                          onClick={() => handleDelete(cat.categoryId)}
+                          className="p-2.5 hover:bg-red-50 rounded-xl text-slate-200 hover:text-red-500 transition-all"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
                     </div>
                   </div>
                 ))
@@ -245,8 +321,8 @@ export default function Categories() {
           <div className="bg-white rounded-[48px] shadow-2xl w-full max-w-md max-h-[90vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-500">
             <div className="flex items-center justify-between p-10 pb-4 border-b border-slate-50">
                <div>
-                  <h3 className="text-2xl font-black text-slate-800 tracking-tighter">New Structure</h3>
-                  <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Expansion Protocol</p>
+                  <h3 className="text-2xl font-black text-slate-800 tracking-tighter">{isEditMode ? 'Update' : 'New'} Structure</h3>
+                  <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">{isEditMode ? 'Modification Protocol' : 'Expansion Protocol'}</p>
                </div>
               <button onClick={() => setIsModalOpen(false)} className="p-3 bg-slate-50 hover:bg-red-50 rounded-2xl text-slate-400 hover:text-red-500 transition-all"><X size={20} /></button>
             </div>
@@ -277,11 +353,29 @@ export default function Categories() {
                     >Income</button>
                     </div>
                 </div>
+                <div className="space-y-2">
+                    <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-2">Cover Image URL or Upload</label>
+                    <div className="flex gap-2">
+                        <input 
+                        type="text"
+                        value={formData.imageUrl}
+                        onChange={e => setFormData({...formData, imageUrl: e.target.value})}
+                        className="flex-1 min-w-0 bg-slate-50 border-none rounded-[20px] px-6 py-4 font-bold text-slate-900 focus:ring-4 focus:ring-orange-500/10 placeholder:text-slate-300 text-sm"
+                        placeholder="https://..."
+                        />
+                        <label className="shrink-0 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold px-6 py-4 rounded-[20px] cursor-pointer transition-colors flex items-center justify-center text-[10px] uppercase tracking-widest relative overflow-hidden group">
+                           {isUploading ? '...' : (
+                               <div className="flex items-center gap-2"><UploadCloud size={14}/> Upload</div>
+                           )}
+                           <input type="file" accept="image/*" className="hidden" onChange={handleImageUpload} disabled={isUploading} />
+                        </label>
+                    </div>
+                </div>
                 <button 
                     type="submit"
                     className="w-full bg-slate-900 text-white font-black py-6 rounded-[32px] shadow-2xl shadow-slate-900/40 transition-all hover:scale-[1.02] active:scale-95 text-xs uppercase tracking-widest mt-4"
                 >
-                    Initialize Category
+                    {isEditMode ? 'Apply Updates' : 'Initialize Category'}
                 </button>
                 </form>
             </div>

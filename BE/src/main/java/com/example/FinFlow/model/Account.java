@@ -26,6 +26,9 @@ public class Account {
     // BANK, E-WALLET, CASH, INVESTMENT, CREDIT
     private String accountType;
 
+    @Column(name = "image_url", columnDefinition = "TEXT")
+    private String imageUrl;
+
     private BigDecimal balance;
 
     private LocalDateTime createdAt = LocalDateTime.now();
