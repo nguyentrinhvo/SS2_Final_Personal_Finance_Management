@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import toast from 'react-hot-toast';
 import { Target, Plus, X, Trash2, Edit2, TrendingUp, Camera, Wallet, Check, RotateCcw } from 'lucide-react';
+import { MOCK_DATA } from '../../utils/mockData';
 
 const GOAL_API = 'http://localhost:8080/api/goals';
 
@@ -58,6 +59,13 @@ const Goals = () => {
     };
 
     const fetchGoals = async () => {
+        const isDemo = localStorage.getItem('isDemoMode') === 'true';
+        if (isDemo) {
+            setGoals(MOCK_DATA.goals);
+            setLoading(false);
+            return;
+        }
+
         if (!userId) return;
         try {
             const response = await axios.get(`${GOAL_API}/user/${userId}`);
@@ -71,6 +79,13 @@ const Goals = () => {
 
     useEffect(() => {
         fetchGoals();
+
+        const handleRefresh = () => {
+            fetchGoals();
+        };
+
+        window.addEventListener('transactionRefresh', handleRefresh);
+        return () => window.removeEventListener('transactionRefresh', handleRefresh);
     }, [userId]);
 
     const handleSubmit = async (e) => {
@@ -166,147 +181,140 @@ const Goals = () => {
     );
 
     return (
-        <div className="max-w-7xl mx-auto space-y-8 animate-in fade-in duration-700 pb-20">
-            <div className="flex justify-between items-end px-4">
-                <div className="space-y-1">
-                   <h2 className="text-3xl font-black text-slate-900 tracking-tight">Financial Goals</h2>
-                   <p className="text-slate-400 font-bold text-xs uppercase tracking-widest">Achieve Your Dreams</p>
+        <div className="w-full max-w-7xl mx-auto space-y-6 animate-in fade-in duration-700 pb-12">
+            <div className="flex justify-between items-center gap-4 px-4">
+                <div className="space-y-0.5">
+                   <h2 className="text-2xl font-bold text-slate-900 tracking-tight">Goals</h2>
+                   <p className="text-slate-400 font-bold text-[10px] uppercase tracking-[0.2em]">Achieve Your Dreams</p>
                 </div>
                 <button 
                     onClick={() => { resetForm(); setIsModalOpen(true); }}
-                    className="bg-slate-900 text-white font-black px-6 py-4 rounded-2xl shadow-xl hover:scale-[1.03] active:scale-95 transition-all flex items-center gap-2 text-sm"
+                    className="flex items-center gap-2 px-5 py-2.5 bg-slate-900 text-white rounded-xl font-bold shadow-md hover:bg-orange-600 transition-all text-xs uppercase tracking-widest"
                 >
-                    <Plus size={18} /> Add Goal
+                    <Plus size={16} />
+                    <span>Add Goal</span>
                 </button>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 px-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 px-4">
                 {goals.length > 0 ? goals.map(goal => {
                     const progress = Math.min(100, Math.max(0, (goal.currentAmount / (goal.targetAmount || 1)) * 100));
                     const isComplete = progress >= 100;
 
                     return (
-                        <div key={goal.goalId} className="bg-white rounded-[40px] border border-slate-100 shadow-sm flex flex-col hover:shadow-xl transition-all duration-500 overflow-hidden group h-full">
-                            <div className="h-48 w-full relative overflow-hidden bg-slate-50">
-                                {goal.imageUrl ? (
-                                    <img src={goal.imageUrl} alt={goal.name} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
-                                ) : (
-                                    <div className="w-full h-full flex items-center justify-center text-slate-200"><Target size={48} /></div>
-                                )}
-                                <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                    <button onClick={() => handleEditClick(goal)} className="p-2.5 bg-white/80 backdrop-blur-md rounded-xl text-slate-600 hover:text-orange-600 border border-white transition-all shadow-lg"><Edit2 size={14} /></button>
-                                    <button onClick={() => handleDelete(goal.goalId)} className="p-2.5 bg-white/80 backdrop-blur-md rounded-xl text-slate-600 hover:text-red-500 border border-white transition-all shadow-lg"><Trash2 size={14} /></button>
+                        <div key={goal.goalId} className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-all duration-300 group h-fit relative">
+                            <div className="flex justify-between items-start mb-4">
+                                <div className="flex items-center gap-3">
+                                    {goal.imageUrl ? (
+                                        <div className="size-11 rounded-xl overflow-hidden shadow-sm border border-slate-100">
+                                            <img src={goal.imageUrl} alt={goal.name} className="w-full h-full object-cover" />
+                                        </div>
+                                    ) : (
+                                        <div className="size-11 rounded-xl bg-slate-50 flex items-center justify-center text-slate-300 border border-slate-100">
+                                            <Target size={18} />
+                                        </div>
+                                    )}
+                                    <div className="space-y-0.5">
+                                        <div className="flex items-center gap-2">
+                                            <h3 className="text-lg font-bold text-slate-900 tracking-tight leading-none truncate max-w-[120px]">{goal.name}</h3>
+                                            {isComplete && <Check size={14} className="text-green-500" />}
+                                        </div>
+                                        <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">{goal.category}</p>
+                                    </div>
+                                </div>
+                                <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <button onClick={() => handleEditClick(goal)} className="p-1.5 text-slate-300 hover:text-orange-600 rounded-lg transition-colors"><Edit2 size={14} /></button>
+                                    <button onClick={() => handleDelete(goal.goalId)} className="p-1.5 text-slate-300 hover:text-red-500 rounded-lg transition-colors"><Trash2 size={14} /></button>
                                 </div>
                             </div>
 
-                            <div className="px-8 pb-8 flex-1 flex flex-col space-y-4">
-                                <div className="space-y-1">
-                                    <div className="flex items-center gap-2">
-                                        <h3 className="text-xl font-black text-slate-900 tracking-tight leading-tight capitalize truncate">{goal.name}</h3>
-                                        {isComplete && <TrendingUp size={16} className="text-green-500 animate-bounce" />}
+                            <div className="space-y-4">
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="space-y-0.5">
+                                        <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Target Goal</p>
+                                        <p className="text-base font-black text-slate-800 tracking-tight">
+                                            {goal.targetAmount?.toLocaleString('vi-VN')} <span className="text-[10px] opacity-30">đ</span>
+                                        </p>
                                     </div>
-                                    <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{goal.category}</p>
+                                    <div className="space-y-0.5">
+                                        <p className="text-[9px] font-bold text-orange-500 uppercase tracking-widest">Total Saved</p>
+                                        <p className="text-base font-black text-orange-600 tracking-tight">
+                                            {goal.currentAmount?.toLocaleString('vi-VN')} <span className="text-[10px] opacity-30">đ</span>
+                                        </p>
+                                    </div>
                                 </div>
+                                
+                                <div className="space-y-2">
+                                    <div className="w-full bg-slate-50 h-2 rounded-full overflow-hidden border border-slate-100 p-0.5">
+                                        <div 
+                                            className={`h-full rounded-full transition-all duration-1000 ${isComplete ? 'bg-green-500' : 'bg-orange-600'}`}
+                                            style={{ width: `${progress}%` }}
+                                        ></div>
+                                    </div>
+                                    <div className="flex justify-between items-center text-[9px] font-bold uppercase tracking-widest">
+                                        <span className={isComplete ? 'text-green-600' : 'text-orange-600'}>{Math.round(progress)}% Achieved</span>
+                                        <span className="text-slate-300">{isComplete ? 'Complete' : 'Growing'}</span>
+                                    </div>
+                                </div>
+                            </div>
 
-                                <div className="space-y-4">
-                                    <div className="flex flex-col gap-3">
-                                        <div className="space-y-1">
-                                            <div className="flex items-center gap-2 text-slate-400">
-                                                <Target size={12} strokeWidth={3} />
-                                                <p className="text-[9px] font-black uppercase tracking-[0.2em] leading-none">Target Goal</p>
-                                            </div>
-                                            <h4 className="text-2xl font-black text-slate-800 tracking-tighter leading-none">
-                                                {goal.targetAmount?.toLocaleString('vi-VN')} <span className="text-[10px] opacity-40 uppercase ml-0.5">đ</span>
-                                            </h4>
+                            <div className="mt-6 pt-4 border-t border-slate-50">
+                                {isComplete ? (
+                                    <button 
+                                        onClick={() => handleComplete(goal.goalId, goal.name)}
+                                        className="w-full py-2.5 bg-green-50 text-green-600 hover:bg-green-600 hover:text-white rounded-xl font-bold uppercase tracking-widest text-[9px] flex items-center justify-center gap-2 transition-all"
+                                    >
+                                        <Check size={14} /> Finish Objective
+                                    </button>
+                                ) : showFundInput === goal.goalId ? (
+                                    <div className="space-y-3 pt-1">
+                                        <div className="flex gap-1 p-1 bg-slate-50 rounded-lg">
+                                            <button onClick={() => setFundMode('ADD')} className={`flex-1 py-1 font-bold text-[8px] uppercase tracking-widest rounded-md transition-all ${fundMode === 'ADD' ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-400'}`}>Add</button>
+                                            <button onClick={() => setFundMode('SUBTRACT')} className={`flex-1 py-1 font-bold text-[8px] uppercase tracking-widest rounded-md transition-all ${fundMode === 'SUBTRACT' ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-400'}`}>Withdraw</button>
                                         </div>
-                                        <div className="space-y-1">
-                                            <div className="flex items-center gap-2 text-orange-500">
-                                                <Wallet size={12} strokeWidth={3} />
-                                                <p className="text-[9px] font-black uppercase tracking-[0.2em] leading-none">Total Saved</p>
-                                            </div>
-                                            <div className="text-3xl font-black text-orange-600 tracking-tighter leading-none flex items-center gap-1.5">
-                                                {goal.currentAmount?.toLocaleString('vi-VN')} <span className="text-xs opacity-50 uppercase">đ</span>
-                                                {isComplete && <div className="p-1 bg-green-100 rounded-lg text-green-600"><Check size={14} strokeWidth={4} /></div>}
-                                            </div>
-                                        </div>
-                                    </div>
-                                    
-                                    <div className="space-y-2.5">
-                                        <div className="w-full bg-slate-50 h-2.5 rounded-full overflow-hidden border border-slate-100 p-0.5 shadow-inner">
-                                            <div 
-                                                className={`h-full rounded-full shadow-lg transition-all duration-1000 ${isComplete ? 'bg-gradient-to-r from-green-400 to-green-600' : 'bg-gradient-to-r from-orange-400 to-orange-600'}`}
-                                                style={{ width: `${progress}%` }}
-                                            ></div>
-                                        </div>
-                                        <div className="flex justify-between items-center px-1">
-                                            <p className={`text-[10px] font-black uppercase tracking-[0.2em] ${isComplete ? 'text-green-600' : 'text-orange-600'}`}>
-                                                {Math.round(progress)}% ACHIEVED
-                                            </p>
-                                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{isComplete ? 'Mission Complete' : 'Active Growth'}</span>
+                                        <div className="flex gap-2">
+                                            <input 
+                                                type="text" autoFocus placeholder="0"
+                                                value={formatDisplay(fundAmount)} 
+                                                onChange={e => setFundAmount(cleanNum(e.target.value))}
+                                                className="flex-1 bg-slate-50 border-none rounded-xl px-4 py-2 font-bold text-slate-900 text-sm outline-none placeholder:text-slate-200"
+                                            />
+                                            <button 
+                                                onClick={() => handleFundUpdate(goal.goalId, fundAmount, fundMode === 'SUBTRACT')} 
+                                                className="px-4 py-2 bg-slate-900 text-white rounded-xl font-bold text-[9px] uppercase tracking-widest"
+                                            >
+                                                Save
+                                            </button>
+                                            <button onClick={() => setShowFundInput(null)} className="absolute right-4 top-1/2 -translate-y-1/2 p-2 text-slate-300 hover:text-red-500 transition-colors"><X size={14} /></button>
                                         </div>
                                     </div>
-                                </div>
-
-                                <div className="pt-2 border-t border-slate-50">
-                                    {isComplete ? (
-                                        <button 
-                                            onClick={() => handleComplete(goal.goalId, goal.name)}
-                                            className="w-full mt-2 py-4 bg-green-50 text-green-600 hover:bg-green-600 hover:text-white rounded-[24px] font-black uppercase tracking-widest text-[10px] flex items-center justify-center gap-2 transition-all border border-green-100/50 shadow-sm shadow-green-100 group"
-                                        >
-                                            <Check size={16} className="group-hover:scale-125 transition-transform" /> Complete Goal
-                                        </button>
-                                    ) : showFundInput === goal.goalId ? (
-                                        <div className="space-y-3 animate-in slide-in-from-top-2 duration-300 pt-2">
-                                            <div className="flex gap-1 p-1 bg-slate-50 rounded-xl">
-                                                <button onClick={() => setFundMode('ADD')} className={`flex-1 py-1.5 font-black text-[9px] uppercase tracking-widest rounded-lg transition-all ${fundMode === 'ADD' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-400'}`}>Deposit</button>
-                                                <button onClick={() => setFundMode('SUBTRACT')} className={`flex-1 py-1.5 font-black text-[9px] uppercase tracking-widest rounded-lg transition-all ${fundMode === 'SUBTRACT' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-400'}`}>Withdraw</button>
-                                            </div>
-                                            <div className="space-y-2">
-                                                <div className="relative">
-                                                    <input 
-                                                        type="text" autoFocus placeholder="0"
-                                                        value={formatDisplay(fundAmount)} 
-                                                        onChange={e => setFundAmount(cleanNum(e.target.value))}
-                                                        className="w-full bg-slate-50 border-none rounded-2xl px-6 py-3.5 font-black text-slate-900 text-xl outline-none placeholder:text-slate-100 pr-12 shadow-inner"
-                                                    />
-                                                    <button onClick={() => setShowFundInput(null)} className="absolute right-4 top-1/2 -translate-y-1/2 p-2 text-slate-300 hover:text-red-500 transition-all"><X size={16} /></button>
-                                                </div>
-                                                <button 
-                                                    onClick={() => handleFundUpdate(goal.goalId, fundAmount, fundMode === 'SUBTRACT')} 
-                                                    className="w-full py-3.5 bg-slate-900 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all hover:scale-[1.02] active:scale-95 shadow-xl shadow-slate-900/10 flex items-center justify-center gap-2"
-                                                >
-                                                    <Check size={14} /> Enter Capital
-                                                </button>
-                                            </div>
-                                        </div>
-                                    ) : (
-                                        <button 
-                                            onClick={() => { setShowFundInput(goal.goalId); setFundMode('ADD'); }}
-                                            className="w-full mt-2 py-4 bg-orange-50 text-orange-600 hover:bg-orange-600 hover:text-white rounded-[24px] font-black uppercase tracking-widest text-[10px] flex items-center justify-center gap-2 transition-all border border-orange-100/50 shadow-sm shadow-orange-100"
-                                        >
-                                            Manage Funds
-                                        </button>
-                                    )}
-                                </div>
+                                ) : (
+                                    <button 
+                                        onClick={() => { setShowFundInput(goal.goalId); setFundMode('ADD'); }}
+                                        className="w-full py-2.5 bg-orange-50 text-orange-600 hover:bg-orange-600 hover:text-white rounded-xl font-bold uppercase tracking-widest text-[9px] flex items-center justify-center gap-2 transition-all"
+                                    >
+                                        Manage Funds
+                                    </button>
+                                )}
                             </div>
                         </div>
                     );
                 }) : (
-                    <div className="col-span-full py-20 text-center space-y-4 border border-dashed border-slate-200 rounded-[48px] bg-slate-50/30">
-                        <div className="bg-slate-100 w-16 h-16 rounded-3xl flex items-center justify-center mx-auto text-slate-300"><Target size={32} /></div>
-                        <p className="text-slate-400 font-bold text-xs uppercase tracking-[0.2em]">Dream it. Plan it. Do it.</p>
+                    <div className="col-span-full py-16 text-center space-y-3 border border-dashed border-slate-100 rounded-2xl bg-slate-50/50">
+                        <Target size={24} className="mx-auto text-slate-200" />
+                        <p className="text-slate-400 font-bold text-[10px] uppercase tracking-[0.2em]">Dream it. Plan it. Do it.</p>
                     </div>
                 )}
             </div>
 
             {isModalOpen && (
                 <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md flex items-center justify-center z-[500] p-6 animate-in fade-in duration-300">
-                    <div className="bg-white rounded-[40px] shadow-2xl w-full max-w-md overflow-hidden relative">
-                        <div className="p-8 pb-4 border-b border-slate-50 flex items-center justify-between">
+                    <div className="bg-white rounded-[32px] shadow-2xl w-full max-w-md overflow-hidden relative">
+                        <div className="p-6 pb-4 border-b border-slate-50 flex items-center justify-between">
                             <h3 className="text-xl font-black text-slate-900">{isEditMode ? 'Update' : 'New'} Dream</h3>
                             <button onClick={() => { setIsModalOpen(false); resetForm(); }} className="p-3 bg-slate-50 hover:bg-red-50 text-slate-400 hover:text-red-500 rounded-2xl transition-all"><X size={20} /></button>
                         </div>
-                        <form onSubmit={handleSubmit} className="p-8 pt-4 space-y-6 max-h-[80vh] overflow-y-auto">
+                        <form onSubmit={handleSubmit} className="p-6 pt-4 space-y-4 max-h-[80vh] overflow-y-auto">
                             <div className="space-y-1 px-1">
                                 <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Goal Name</label>
                                 <input type="text" required value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} className="w-full bg-slate-50 border-none rounded-2xl px-6 py-4 font-bold text-slate-900 focus:ring-2 focus:ring-orange-500/20" placeholder="e.g. Dream House" />
@@ -341,7 +349,7 @@ const Goals = () => {
                                     <input type="text" placeholder="Or URL..." value={formData.imageUrl} onChange={e => setFormData({...formData, imageUrl: e.target.value})} className="flex-1 bg-slate-50 border-none rounded-2xl px-6 py-4 font-bold text-slate-900 focus:ring-2 focus:ring-orange-500/20 text-xs" />
                                 </div>
                             </div>
-                            <button type="submit" className="w-full bg-slate-900 text-white font-black py-5 rounded-2xl shadow-xl hover:scale-[1.02] active:scale-95 transition-all uppercase tracking-widest text-xs mt-4">
+                            <button type="submit" className="w-full bg-slate-900 text-white font-black py-4 rounded-xl shadow-xl hover:scale-[1.02] active:scale-95 transition-all uppercase tracking-widest text-xs mt-4">
                                 {isEditMode ? 'Update Objective' : 'Commit Objective'}
                             </button>
                         </form>

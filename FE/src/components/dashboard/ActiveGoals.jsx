@@ -3,13 +3,13 @@ import { Target, Plus, ArrowUpRight } from 'lucide-react';
 
 export default function ActiveGoals({ goals = [] }) {
   return (
-    <div className="bg-white p-10 rounded-[40px] border border-slate-100 shadow-sm flex-1 space-y-10 animate-in fade-in duration-700 delay-300 hover:shadow-xl transition-shadow duration-500 overflow-hidden relative">
+    <div className="bg-white px-5 py-4 rounded-2xl border border-slate-100 shadow-sm flex-1 space-y-5 animate-in fade-in duration-700 delay-300 hover:shadow-md transition-shadow duration-300 overflow-hidden relative h-fit">
       <div className="absolute -right-20 -top-20 size-60 bg-slate-50/50 rounded-full group-hover:scale-150 transition-transform duration-1000"></div>
 
       <div className="relative flex items-center justify-between">
-        <div className="space-y-1">
-            <h3 className="text-2xl font-black text-slate-900 tracking-tighter">Savings Milestones</h3>
-            <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest leading-none">Financial Ambitions</p>
+        <div className="space-y-0.5">
+            <h3 className="text-lg font-bold text-slate-900 tracking-tight">Milestones</h3>
+            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none">Savings Goals</p>
         </div>
         <button 
           onClick={() => window.location.href='/dashboard/goals'}
@@ -19,8 +19,8 @@ export default function ActiveGoals({ goals = [] }) {
         </button>
       </div>
       
-      <div className="relative space-y-8 font-bold">
-        {goals.length > 0 ? goals.map((goal) => {
+      <div className="relative space-y-5 font-bold max-h-[220px] overflow-y-auto pr-2 py-1">
+        {goals.map((goal) => {
           const progress = Math.min(100, (goal.currentAmount / (goal.targetAmount || 1)) * 100);
           return (
             <div key={goal.goalId} className="group cursor-pointer space-y-4">
@@ -47,19 +47,14 @@ export default function ActiveGoals({ goals = [] }) {
               </div>
             </div>
           );
-        }) : (
-            <div className="py-16 text-center space-y-4 bg-slate-50 border-2 border-dashed border-slate-100 rounded-[32px]">
-                <div className="bg-white w-12 h-12 rounded-full flex items-center justify-center mx-auto text-slate-200 shadow-sm"><Target size={24} /></div>
-                <p className="text-slate-300 font-black text-[10px] uppercase tracking-[0.4em] italic mb-2">No Active Milestones</p>
-            </div>
-        )}
+        })}
         
         <button 
           onClick={() => window.location.href='/dashboard/goals'}
-          className="w-full mt-2 flex items-center justify-center gap-3 py-6 bg-slate-50/50 border-2 border-dashed border-slate-100 rounded-[32px] text-slate-400 hover:text-orange-600 hover:border-orange-500 hover:bg-orange-50 transition-all font-black uppercase tracking-widest active:scale-95 shadow-sm shadow-slate-100 hover:shadow-xl hover:shadow-orange-100 group"
+          className="w-full mt-2 flex items-center justify-center gap-2 py-4 bg-slate-50/50 border border-dashed border-slate-200 rounded-xl text-slate-400 hover:text-orange-600 hover:border-orange-500 hover:bg-orange-50 transition-all font-bold uppercase tracking-widest active:scale-95 shadow-sm group"
         >
-          <Plus size={20} className="text-orange-500 group-hover:rotate-90 transition-transform" />
-          <span className="text-xs">Establish New Goal</span>
+          <Plus size={16} className="text-orange-500 group-hover:rotate-90 transition-transform" />
+          <span className="text-[10px]">New Goal</span>
         </button>
       </div>
     </div>

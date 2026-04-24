@@ -98,7 +98,25 @@ export default function Navbar({ toggleMobileMenu }) {
                 }
             }
         });
-
+        // 3. Check Transactions (Incomplete Info)
+        trxsRes.data.forEach(t => {
+            const isOthers = t.category?.name?.toLowerCase() === 'others';
+            const isUnknown = t.account?.accountName?.toLowerCase() === 'unknown';
+            
+            if (isOthers || isUnknown) {
+                const notifId = `trx_incomplete_${t.transactionId}`;
+                if (!clearedIds.includes(notifId)) {
+                    newNotifs.push({
+                        id: notifId,
+                        type: 'TRX_INCOMPLETE',
+                        severity: 'warning',
+                        message: `Manual Update Needed`,
+                        detail: `${t.note || 'Transaction'}: ${isOthers ? 'Others category' : ''}${isOthers && isUnknown ? ' & ' : ''}${isUnknown ? 'Unknown account' : ''}`,
+                        link: '/dashboard/transactions'
+                    });
+                }
+            }
+        });
         setNotifications(newNotifs.reverse());
 
         const viewedStr = localStorage.getItem('viewedNotifications') || '[]';
@@ -181,7 +199,7 @@ export default function Navbar({ toggleMobileMenu }) {
   }, []);
 
   return (
-    <header className="h-16 lg:h-18 bg-white flex items-center justify-between px-4 sm:px-6 lg:px-8 border-b border-slate-50 relative z-30">
+    <header className="h-16 bg-white flex items-center justify-between px-4 sm:px-6 lg:px-6 border-b border-slate-50 relative z-30">
       <div className="flex items-center gap-3">
         {/* Mobile Menu Trigger */}
         <button

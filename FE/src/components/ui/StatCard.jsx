@@ -1,39 +1,65 @@
 import React from 'react';
+import { ResponsiveContainer, LineChart, Line } from 'recharts';
 
-const StatCard = ({ title, value, change, isPositive, icon: Icon }) => {
-  // Check if value is zero or contains only zero-like data (e.g. "0 đ")
+const StatCard = ({ title, value, change, isPositive, icon: Icon, sparklineData }) => {
   const isZero = value === 0 || value === "0 đ" || value === "0.0 đ";
   
-  // Format currency consistently
   const displayValue = typeof value === 'number' 
     ? value.toLocaleString('vi-VN') 
     : value;
 
   return (
-    <div className="bg-white p-8 rounded-[40px] border border-slate-100 shadow-sm hover:shadow-2xl hover:-translate-y-1.5 transition-all duration-700 group overflow-hidden relative">
-      <div className="absolute -right-20 -bottom-20 size-60 bg-slate-50/50 rounded-full group-hover:scale-150 transition-transform duration-1000"></div>
-      
-      <div className="relative space-y-8">
+    <div className="bg-white px-5 py-4 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-all duration-300 group overflow-hidden relative h-fit">
+      <div className="flex flex-col gap-3 relative z-10">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <div className={`p-3 rounded-2xl transition-all duration-500 ${isPositive ? 'bg-green-50 text-green-600 group-hover:bg-green-500 group-hover:text-white' : 'bg-red-50 text-red-600 group-hover:bg-red-500 group-hover:text-white'}`}>
-                <Icon size={20} strokeWidth={3} />
+          <div className="flex items-center gap-2.5">
+            <div className={`p-2 rounded-xl transition-all duration-300 ${
+              isPositive 
+                ? 'bg-green-50 text-green-600 group-hover:bg-green-600 group-hover:text-white' 
+                : 'bg-red-50 text-red-600 group-hover:bg-red-600 group-hover:text-white'
+            }`}>
+                <Icon size={14} strokeWidth={2.5} />
             </div>
-            <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] group-hover:text-slate-900 transition-colors">{title}</h3>
+            <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-tight group-hover:text-slate-900 transition-colors line-clamp-1">{title}</h3>
           </div>
-          {change !== "0" && (
-            <div className={`text-[10px] font-black px-3 py-1.5 rounded-xl uppercase tracking-widest ${isPositive ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-600'}`}>
+          {change && change !== "0" && (
+            <div className={`text-[10px] font-bold px-2 py-0.5 rounded-lg ${
+              isPositive ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-600'
+            }`}>
               {isPositive ? '↑' : '↓'} {change}%
             </div>
           )}
         </div>
 
-        <div className="space-y-1 pl-1">
-          <p className={`text-3xl lg:text-4xl font-black tracking-tighter transition-colors duration-500 ${isZero ? 'text-slate-200' : 'text-slate-900'}`}>
-            {displayValue} <span className="text-xl font-bold ml-0.5 opacity-30">đ</span>
-          </p>
+        <div className="flex items-end justify-between gap-2">
+                 <div className="flex items-baseline gap-1 min-w-0">
+                    <p className={`text-xl lg:text-2xl font-black tracking-normal transition-colors duration-300 truncate ${isZero ? 'text-slate-200' : 'text-slate-900'}`}>
+                        {displayValue}
+                    </p>
+                    <span className="text-xs font-bold opacity-30 shrink-0">đ</span>
+                 </div>
+            
+            {sparklineData && (
+                <div className="h-8 w-16 shrink-0 opacity-20 group-hover:opacity-100 transition-opacity">
+                    <ResponsiveContainer width="100%" height="100%">
+                        <LineChart data={sparklineData}>
+                            <Line 
+                                type="monotone" 
+                                dataKey="value" 
+                                stroke={isPositive ? '#16a34a' : '#dc2626'} 
+                                strokeWidth={2} 
+                                dot={false} 
+                                isAnimationActive={true}
+                            />
+                        </LineChart>
+                    </ResponsiveContainer>
+                </div>
+            )}
         </div>
       </div>
+      
+      {/* Subtle background detail */}
+      <div className={`absolute -right-6 -bottom-6 size-24 rounded-full opacity-[0.03] group-hover:scale-125 transition-transform duration-700 ${isPositive ? 'bg-green-600' : 'bg-red-600'}`}></div>
     </div>
   );
 };

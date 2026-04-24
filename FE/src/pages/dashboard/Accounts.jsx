@@ -19,6 +19,7 @@ import {
   X,
   UploadCloud
 } from 'lucide-react';
+import { MOCK_DATA } from '../../utils/mockData';
 
 const API_BASE_URL = 'http://localhost:8080/api/accounts';
 const TRX_API_URL = 'http://localhost:8080/api/transactions';
@@ -52,6 +53,12 @@ export default function Accounts() {
   };
 
   const fetchAccounts = async () => {
+    const isDemo = localStorage.getItem('isDemoMode') === 'true';
+    if (isDemo) {
+      setAccounts(MOCK_DATA.accounts);
+      return;
+    }
+
     if (!userId) return;
     try {
       const response = await axios.get(`${API_BASE_URL}/user/${userId}`);
@@ -63,6 +70,12 @@ export default function Accounts() {
   };
 
   const fetchTransactions = async () => {
+    const isDemo = localStorage.getItem('isDemoMode') === 'true';
+    if (isDemo) {
+      setTransactions(MOCK_DATA.transactions.slice(0, 5));
+      return;
+    }
+
     if (!userId) return;
     try {
       const response = await axios.get(`${TRX_API_URL}/user/${userId}/recent?limit=5`);
@@ -188,23 +201,23 @@ export default function Accounts() {
   };
 
   return (
-    <div className="w-full max-w-7xl mx-auto space-y-10 animate-in fade-in duration-700 pb-20">
-      <div className="flex justify-between items-end">
-        <div className="space-y-1">
-           <h2 className="text-3xl font-black text-slate-900 tracking-tight">Accounts</h2>
-           <p className="text-slate-400 font-bold text-xs uppercase tracking-widest">Financial Foundations</p>
+    <div className="w-full max-w-7xl mx-auto space-y-6 animate-in fade-in duration-700 pb-12">
+      <div className="flex justify-between items-center gap-4 px-2">
+        <div className="space-y-0.5">
+           <h2 className="text-2xl font-bold text-slate-900 tracking-tight">Accounts</h2>
+           <p className="text-slate-400 font-bold text-[10px] uppercase tracking-[0.2em]">Financial Foundations</p>
         </div>
         <button 
           onClick={() => openModal()}
-          className="flex items-center gap-2 px-6 py-4 bg-slate-900 text-white rounded-2xl font-black shadow-xl hover:scale-[1.03] active:scale-95 transition-all text-sm"
+          className="flex items-center gap-2 px-5 py-2.5 bg-slate-900 text-white rounded-xl font-bold shadow-md hover:bg-orange-600 transition-all text-xs uppercase tracking-widest"
         >
-          <PlusCircle size={20} />
+          <PlusCircle size={16} />
           <span>New Account</span>
         </button>
       </div>
 
-      <div className="border-b border-slate-100 overflow-x-auto scrollbar-hide pb-2">
-        <div className="flex gap-8 min-w-max">
+      <div className="border-b border-slate-100 overflow-x-auto scrollbar-none mb-6">
+        <div className="flex gap-6 min-w-max">
           {[
             { id: 'ALL', label: 'All Assets', count: accounts.length },
             { id: 'BANK', label: 'Bank' },
@@ -216,15 +229,15 @@ export default function Accounts() {
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`pb-4 px-1 flex items-center gap-2 transition-all border-b-[3px] text-[11px] uppercase tracking-widest ${
+              className={`pb-3 px-1 flex items-center gap-2 transition-all border-b-2 text-[10px] uppercase tracking-[0.1em] ${
                 activeTab === tab.id 
-                ? 'border-orange-600 text-slate-900 font-black' 
-                : 'border-transparent text-slate-400 hover:text-slate-600 font-bold'
+                ? 'border-orange-600 text-slate-900 font-bold' 
+                : 'border-transparent text-slate-400 hover:text-slate-600 font-medium'
               }`}
             >
               <span>{tab.label}</span>
               {tab.count !== undefined && (
-                <span className={`text-[10px] px-2 py-0.5 rounded-lg ${activeTab === tab.id ? 'bg-orange-600 text-white' : 'bg-slate-100 text-slate-400'}`}>
+                <span className={`text-[9px] px-1.5 py-0.5 rounded-full ${activeTab === tab.id ? 'bg-orange-600 text-white' : 'bg-slate-100 text-slate-400'}`}>
                   {tab.count}
                 </span>
               )}
@@ -233,67 +246,66 @@ export default function Accounts() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
         {filteredAccounts.map((account) => (
-          <div key={account.accountId} className="bg-white p-8 rounded-[40px] border border-slate-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group relative flex flex-col justify-between">
-            <div>
-                <div className="flex justify-between items-start mb-8">
+          <div key={account.accountId} className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-all duration-300 group h-fit">
+              <div className="flex justify-between items-start mb-4">
                 {account.imageUrl ? (
-                  <div className="size-16 rounded-3xl overflow-hidden shadow-sm flex items-center justify-center border border-slate-100 transition-all duration-500 group-hover:scale-110">
+                  <div className="size-12 rounded-xl overflow-hidden shadow-sm flex items-center justify-center border border-slate-100 group-hover:border-orange-200 transition-colors">
                     <img src={account.imageUrl} alt={account.accountName} className="w-full h-full object-cover" />
                   </div>
                 ) : (
-                  <div className={`p-4 rounded-2xl flex items-center justify-center border transition-all duration-500 group-hover:scale-110 ${getAccountColors(account.accountType)}`}>
-                      {getAccountIcon(account.accountType)}
+                  <div className={`p-2.5 rounded-xl flex items-center justify-center border transition-all ${getAccountColors(account.accountType)}`}>
+                      {React.cloneElement(getAccountIcon(account.accountType), { size: 20 })}
                   </div>
                 )}
                 
                 <div className="relative">
                     <button 
                     onClick={() => setShowAccountMenu(showAccountMenu === account.accountId ? null : account.accountId)}
-                    className="p-2 text-slate-300 hover:text-orange-600 hover:bg-orange-50 rounded-xl transition-all"
+                    className="p-1.5 text-slate-300 hover:text-orange-600 hover:bg-orange-50 rounded-lg transition-all"
                     >
-                    <MoreVertical size={20} />
+                    <MoreVertical size={16} />
                     </button>
                     
                     {showAccountMenu === account.accountId && (
                     <>
                         <div className="fixed inset-0 z-10" onClick={() => setShowAccountMenu(null)}></div>
-                        <div className="absolute right-0 top-full mt-2 w-48 bg-white border border-slate-100 rounded-2xl shadow-2xl z-20 py-3 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
+                        <div className="absolute right-0 top-full mt-1 w-40 bg-white border border-slate-100 rounded-xl shadow-xl z-20 py-2 overflow-hidden animate-in fade-in slide-in-from-top-1 duration-200">
                             <button 
                             onClick={() => { openModal(account); setShowAccountMenu(null); }}
-                            className="w-full flex items-center gap-4 px-6 py-3 text-xs font-black text-slate-600 hover:bg-slate-50 hover:text-orange-600 transition-colors uppercase tracking-widest"
+                            className="w-full flex items-center gap-3 px-4 py-2 text-[10px] font-bold text-slate-600 hover:bg-slate-50 hover:text-orange-600 transition-colors uppercase tracking-widest"
                             >
-                            <Edit size={14} /> Edit
+                            <Edit size={12} /> Edit
                             </button>
                             <button 
                             onClick={() => handleDelete(account.accountId)}
-                            className="w-full flex items-center gap-4 px-6 py-3 text-xs font-black text-red-500 hover:bg-red-50 transition-colors uppercase tracking-widest"
+                            className="w-full flex items-center gap-3 px-4 py-2 text-[10px] font-bold text-red-500 hover:bg-red-50 transition-colors uppercase tracking-widest"
                             >
-                            <Trash2 size={14} /> Delete
+                            <Trash2 size={12} /> Delete
                             </button>
                         </div>
                     </>
                     )}
                 </div>
-                </div>
+              </div>
 
-                <div className="mb-10">
-                <h3 className="text-2xl font-black text-slate-900 mb-1 group-hover:text-orange-600 transition-colors uppercase tracking-tighter">
+              <div className="mb-4">
+                <h3 className="text-xl font-bold text-slate-800 group-hover:text-orange-600 transition-colors uppercase tracking-tight truncate">
                     {account.accountName}
                 </h3>
-                <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] leading-none">
-                    {account.accountType} Account
+                <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">
+                    {account.accountType}
                 </p>
-                </div>
-            </div>
+              </div>
 
-            <div className="space-y-1">
-              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none">Available Balance</p>
-              <div className="flex items-baseline gap-2 overflow-hidden">
-                <span className="text-3xl font-black text-slate-900 truncate tracking-tighter">
-                  {account.balance?.toLocaleString('vi-VN')} <span className="text-sm font-bold opacity-30 ml-0.5">đ</span>
+            <div className="pt-4 border-t border-slate-50 space-y-1">
+              <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest leading-none">Available Balance</p>
+              <div className="flex items-baseline gap-1 overflow-hidden">
+                <span className="text-2xl font-black text-slate-900 truncate tracking-tight">
+                  {account.balance?.toLocaleString('vi-VN')}
                 </span>
+                <span className="text-[10px] font-bold opacity-30">đ</span>
               </div>
             </div>
           </div>
@@ -301,20 +313,20 @@ export default function Accounts() {
 
         <button 
           onClick={() => openModal()}
-          className="border-2 border-dashed border-slate-200 rounded-[40px] flex flex-col items-center justify-center p-12 hover:border-orange-600 hover:bg-orange-50/50 transition-all duration-300 group min-h-[300px]"
+          className="border-2 border-dashed border-slate-100 rounded-2xl flex flex-col items-center justify-center p-6 hover:border-orange-500 hover:bg-orange-50/30 transition-all duration-300 group h-auto min-h-[180px]"
         >
-          <div className="p-5 rounded-3xl bg-slate-50 text-slate-300 group-hover:bg-orange-100 group-hover:text-orange-600 group-hover:rotate-90 transition-all mb-6">
-            <Plus size={40} />
+          <div className="p-3 rounded-xl bg-slate-50 text-slate-300 group-hover:bg-orange-100 group-hover:text-orange-600 transition-colors mb-3">
+            <Plus size={24} />
           </div>
-          <p className="font-black text-slate-900 text-lg uppercase tracking-widest leading-none mb-2">Add Account</p>
-          <p className="text-xs text-slate-400 font-bold uppercase tracking-widest">Connect your assets</p>
+          <p className="font-bold text-slate-800 text-sm uppercase tracking-widest mb-1">Add Account</p>
+          <p className="text-[9px] text-slate-400 font-medium uppercase tracking-widest">Connect your assets</p>
         </button>
       </div>
 
       {isModalOpen && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md flex items-center justify-center z-[100] p-6 animate-in fade-in duration-300">
-          <div className="bg-white rounded-[48px] shadow-2xl w-full max-w-md overflow-hidden relative animate-in slide-in-from-bottom-5 duration-500">
-            <div className="flex items-center justify-between p-10 pb-6 border-b border-slate-50">
+          <div className="bg-white rounded-[40px] shadow-2xl w-full max-w-md overflow-hidden relative animate-in slide-in-from-bottom-5 duration-500">
+            <div className="flex items-center justify-between p-6 pb-4 border-b border-slate-50">
               <h3 className="text-2xl font-black text-slate-900 tracking-tight">
                 {editingAccount ? 'Update' : 'New'} Account
               </h3>
@@ -322,7 +334,7 @@ export default function Accounts() {
                 <X size={24} />
               </button>
             </div>
-            <form onSubmit={handleSubmit} className="p-10 pt-6 space-y-8">
+            <form onSubmit={handleSubmit} className="p-6 pt-4 space-y-6">
               <div className="space-y-2">
                 <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Account Label</label>
                 <input
@@ -339,7 +351,7 @@ export default function Accounts() {
                 <select
                   value={formData.accountType}
                   onChange={(e) => setFormData({...formData, accountType: e.target.value})}
-                  className="w-full bg-slate-50 border-none rounded-[28px] px-8 py-5 focus:outline-none focus:ring-4 focus:ring-orange-500/10 transition-all font-black text-slate-900 appearance-none"
+                  className="w-full bg-slate-50 border-none rounded-2xl px-6 py-4 focus:outline-none focus:ring-4 focus:ring-orange-500/10 transition-all font-black text-slate-900 appearance-none"
                 >
                   <option value="BANK">Bank Account</option>
                   <option value="CREDIT">Credit Card</option>
@@ -381,7 +393,7 @@ export default function Accounts() {
               </div>
               <button
                 type="submit"
-                className="w-full bg-slate-900 text-white font-black py-6 rounded-[32px] transition-all shadow-2xl shadow-slate-900/20 hover:scale-[1.02] active:scale-95 text-sm uppercase tracking-[0.2em] mt-4"
+                className="w-full bg-slate-900 text-white font-black py-4 rounded-2xl transition-all shadow-2xl shadow-slate-900/20 hover:scale-[1.02] active:scale-95 text-sm uppercase tracking-[0.2em] mt-4"
               >
                 {editingAccount ? 'Commit Changes' : 'Open Account'}
               </button>

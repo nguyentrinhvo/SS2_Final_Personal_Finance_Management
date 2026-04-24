@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import toast from 'react-hot-toast';
 import { Plus, Trash2, Edit, TrendingUp, AlertCircle, X, Check, Wallet, PieChart, MoreHorizontal, UploadCloud } from 'lucide-react';
+import { MOCK_DATA } from '../../utils/mockData';
 
 const API_BUDGETS = 'http://localhost:8080/api/budgets';
 const API_CATEGORIES = 'http://localhost:8080/api/categories/user';
@@ -37,6 +38,15 @@ export default function Budgets() {
   };
 
   const fetchData = async () => {
+    const isDemo = localStorage.getItem('isDemoMode') === 'true';
+    if (isDemo) {
+      setBudgets(MOCK_DATA.budgets);
+      setCategories(MOCK_DATA.categories.filter(c => c.type === 'EXPENSE'));
+      setTransactions(MOCK_DATA.transactions);
+      setLoading(false);
+      return;
+    }
+
     if (!userId) return;
     try {
       const [budRes, catRes, trxRes] = await Promise.all([
@@ -155,23 +165,23 @@ export default function Budgets() {
   );
 
   return (
-    <div className="max-w-6xl mx-auto space-y-8 animate-in fade-in duration-700">
-      <div className="flex justify-between items-end">
-        <div className="space-y-1">
-           <h2 className="text-3xl font-black text-slate-900 tracking-tight">Budgets</h2>
-           <p className="text-slate-400 font-bold text-xs uppercase tracking-widest">Monthly Spending Control</p>
+    <div className="w-full max-w-7xl mx-auto space-y-6 animate-in fade-in duration-700 pb-12">
+      <div className="flex justify-between items-center gap-4 px-2">
+        <div className="space-y-0.5">
+           <h2 className="text-2xl font-bold text-slate-900 tracking-tight">Budgets</h2>
+           <p className="text-slate-400 font-bold text-[10px] uppercase tracking-[0.2em]">Monthly Spending Control</p>
         </div>
         <button 
           onClick={() => setIsModalOpen(true)}
-          className="bg-slate-900 text-white font-black px-6 py-4 rounded-2xl flex items-center gap-3 hover:scale-[1.03] active:scale-95 transition-all shadow-xl shadow-slate-900/20"
+          className="flex items-center gap-2 px-5 py-2.5 bg-slate-900 text-white rounded-xl font-bold shadow-md hover:bg-orange-600 transition-all text-xs uppercase tracking-widest"
         >
-          <Plus size={20} />
-          <span className="text-sm">Set Limit</span>
+          <Plus size={16} />
+          <span>Set Limit</span>
         </button>
       </div>
 
       {budgets.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
           {budgets.map(b => {
             const spent = calculateSpent(b.category?.categoryId);
             const limit = b.amountLimit || 1;
@@ -179,38 +189,38 @@ export default function Budgets() {
             const isOver = spent > limit;
 
             return (
-              <div key={b.budgetId} className="bg-white p-8 rounded-[40px] border border-slate-100 shadow-sm space-y-6 flex flex-col hover:shadow-xl transition-all duration-300 group">
-                <div className="flex justify-between items-start">
+              <div key={b.budgetId} className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-all duration-300 group h-fit">
+                <div className="flex justify-between items-start mb-4">
                   {b.imageUrl ? (
-                    <div className="size-14 rounded-2xl overflow-hidden shadow-sm flex items-center justify-center border border-slate-100">
+                    <div className="size-12 rounded-xl overflow-hidden shadow-sm flex items-center justify-center border border-slate-100">
                       <img src={b.imageUrl} alt="Budget Cover" className="w-full h-full object-cover" />
                     </div>
                   ) : (
-                    <div className={`p-3.5 rounded-2xl ${isOver ? 'bg-red-50 text-red-600' : 'bg-orange-50 text-orange-600'}`}>
-                      <PieChart size={24} />
+                    <div className={`p-2.5 rounded-xl ${isOver ? 'bg-red-50 text-red-600' : 'bg-orange-50 text-orange-600'}`}>
+                      <PieChart size={20} />
                     </div>
                   )}
                   <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <button onClick={() => handleEdit(b)} className="p-2 text-slate-400 hover:text-orange-600 hover:bg-orange-50 rounded-xl transition-all"><Edit size={16} /></button>
-                    <button onClick={() => handleDelete(b.budgetId)} className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all"><Trash2 size={16} /></button>
+                    <button onClick={() => handleEdit(b)} className="p-1.5 text-slate-400 hover:text-orange-600 hover:bg-orange-50 rounded-lg transition-all"><Edit size={14} /></button>
+                    <button onClick={() => handleDelete(b.budgetId)} className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"><Trash2 size={14} /></button>
                   </div>
                 </div>
 
-                <div className="space-y-1">
-                  <h3 className="text-xl font-black text-slate-800 tracking-tight capitalize">{b.category?.name || 'Category'}</h3>
-                  <p className="text-[11px] font-black text-slate-500 uppercase tracking-widest leading-none">
-                    Limit: {limit.toLocaleString('vi-VN')} đ
+                <div className="space-y-0.5">
+                  <h3 className="text-lg font-bold text-slate-800 tracking-tight group-hover:text-orange-600 transition-colors uppercase">{b.category?.name || 'Category'}</h3>
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none">
+                    Protocol Limit: {limit.toLocaleString('vi-VN')} <span className="text-[10px] opacity-40">đ</span>
                   </p>
                 </div>
 
-                <div className="space-y-3">
-                  <div className="flex justify-between items-baseline px-1 gap-2 overflow-hidden">
-                    <div className="text-2xl font-black text-slate-900 tracking-tighter truncate">
-                      {spent.toLocaleString('vi-VN')} <span className="text-xs text-slate-300 ml-0.5">đ</span>
+                <div className="mt-8 space-y-3">
+                  <div className="flex justify-between items-baseline px-0.5 gap-2 overflow-hidden">
+                    <div className="text-xl font-black text-slate-900 tracking-tight truncate">
+                      {spent.toLocaleString('vi-VN')} <span className="text-[10px] text-slate-300">đ</span>
                     </div>
-                    <span className={`font-black text-sm whitespace-nowrap ${isOver ? 'text-red-500' : 'text-orange-600'}`}>{Math.round(percent)}%</span>
+                    <span className={`font-black text-xs whitespace-nowrap ${isOver ? 'text-red-500' : 'text-orange-600'}`}>{Math.round(percent)}%</span>
                   </div>
-                  <div className="w-full bg-slate-50 h-2.5 rounded-full overflow-hidden p-0.5 border border-slate-100 shadow-inner">
+                  <div className="w-full bg-slate-50 h-2 rounded-full overflow-hidden p-0.5 border border-slate-100 shadow-inner">
                     <div 
                       className={`h-full rounded-full transition-all duration-1000 ${isOver ? 'bg-red-500' : 'bg-orange-600 shadow-[0_0_8px_rgba(234,88,12,0.3)]'}`}
                       style={{ width: `${percent}%` }}
@@ -219,9 +229,9 @@ export default function Budgets() {
                 </div>
 
                 {isOver && (
-                   <div className="flex items-center gap-2 text-[10px] font-black text-red-500 uppercase tracking-widest bg-red-50 p-2 rounded-xl border border-red-100 animate-pulse">
-                      <AlertCircle size={12} />
-                      Over Budget Limit
+                   <div className="mt-4 flex items-center gap-2 text-[9px] font-bold text-red-500 uppercase tracking-widest bg-red-50 p-2 rounded-lg border border-red-100 animate-pulse">
+                      <AlertCircle size={10} />
+                      Exceeded Monthly Allowance
                    </div>
                 )}
               </div>
@@ -229,7 +239,7 @@ export default function Budgets() {
           })}
         </div>
       ) : (
-        <div className="bg-white rounded-[48px] p-16 border border-dashed border-slate-200 flex flex-col items-center text-center space-y-6">
+        <div className="bg-white rounded-[40px] p-10 border border-dashed border-slate-200 flex flex-col items-center text-center space-y-4">
             <div className="p-8 bg-slate-50 rounded-[32px] text-slate-300"><Wallet size={48} /></div>
             <div className="space-y-2">
                 <h3 className="text-xl font-black text-slate-800 tracking-tight">No Budgets Set</h3>
@@ -247,18 +257,18 @@ export default function Budgets() {
       {isModalOpen && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md flex items-center justify-center z-[100] p-6">
           <div className="bg-white rounded-[40px] shadow-2xl w-full max-w-md overflow-hidden relative animate-in zoom-in-95 duration-200">
-             <div className="p-8 flex items-center justify-between border-b border-slate-50">
+             <div className="p-5 flex items-center justify-between border-b border-slate-50">
                 <h3 className="text-xl font-black text-slate-900">{isEditMode ? 'Edit' : 'New'} Budget</h3>
                 <button onClick={resetForm} className="p-2.5 bg-slate-50 hover:bg-red-50 text-slate-400 hover:text-red-500 rounded-xl transition-all"><X size={20} /></button>
              </div>
-             <form onSubmit={handleSubmit} className="p-8 space-y-6">
+             <form onSubmit={handleSubmit} className="p-5 space-y-4">
                 <div className="space-y-2">
                   <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Category</label>
                   <select 
                     required disabled={isEditMode}
                     value={formData.categoryId}
                     onChange={e => setFormData({...formData, categoryId: e.target.value})}
-                    className="w-full bg-slate-50 border-none rounded-2xl px-6 py-4 font-bold text-slate-900 focus:ring-2 focus:ring-orange-500/20 appearance-none disabled:opacity-50"
+                    className="w-full bg-slate-50 border-none rounded-xl px-4 py-3 font-bold text-slate-900 focus:ring-2 focus:ring-orange-500/20 appearance-none disabled:opacity-50"
                   >
                     <option value="">Select Structure...</option>
                     {categories.map(c => <option key={c.categoryId} value={c.categoryId}>{c.name}</option>)}
@@ -281,7 +291,7 @@ export default function Budgets() {
                       type="text"
                       value={formData.imageUrl}
                       onChange={e => setFormData({...formData, imageUrl: e.target.value})}
-                      className="flex-1 min-w-0 bg-slate-50 border-none rounded-2xl px-6 py-4 font-bold text-slate-900 focus:ring-2 focus:ring-orange-500/20 text-sm"
+                      className="flex-1 min-w-0 bg-slate-50 border-none rounded-xl px-4 py-3 font-bold text-slate-900 focus:ring-2 focus:ring-orange-500/20 text-sm"
                       placeholder="https://..."
                     />
                     <label className="shrink-0 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold px-6 py-4 rounded-[16px] cursor-pointer transition-colors flex items-center justify-center text-[10px] uppercase tracking-widest relative overflow-hidden group">
@@ -292,7 +302,7 @@ export default function Budgets() {
                     </label>
                   </div>
                 </div>
-                <button type="submit" className="w-full bg-slate-900 text-white font-black py-5 rounded-2xl shadow-xl shadow-slate-900/20 hover:scale-[1.02] active:scale-95 transition-all">
+                <button type="submit" className="w-full bg-slate-900 text-white font-black py-4 rounded-xl shadow-xl shadow-slate-900/20 hover:scale-[1.02] active:scale-95 transition-all">
                   {isEditMode ? 'Update' : 'Confirm'} Limit
                 </button>
              </form>

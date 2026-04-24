@@ -4,14 +4,19 @@ import toast from 'react-hot-toast';
 import { 
   Download,
   TrendingUp,
-  AlertTriangle,
-  Zap,
-  Rocket
+  TrendingDown,
+  PieChart as PieIcon,
+  BarChart3,
+  Calendar,
+  Layers,
+  Activity
 } from 'lucide-react';
 import { 
-  PieChart, Pie, Cell, ResponsiveContainer, Tooltip
+  PieChart, Pie, Cell, ResponsiveContainer, Tooltip,
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Legend as RechartsLegend
 } from 'recharts';
 import * as XLSX from 'xlsx';
+import { MOCK_DATA } from '../../utils/mockData';
 
 const formatCompactNumber = (number) => {
     if (number === 0) return '0';
@@ -37,9 +42,18 @@ export default function Reports() {
   const [categories, setCategories] = useState([]);
   const [transactions, setTransactions] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [activeIndex, setActiveIndex] = useState(null);
   const userId = localStorage.getItem('userId');
 
   const fetchData = async () => {
+    const isDemo = localStorage.getItem('isDemoMode') === 'true';
+    if (isDemo) {
+      setCategories(MOCK_DATA.categories);
+      setTransactions(MOCK_DATA.transactions);
+      setLoading(false);
+      return;
+    }
+
     if (!userId) return;
     try {
       const [catRes, trxRes] = await Promise.all([
@@ -59,13 +73,17 @@ export default function Reports() {
     fetchData();
   }, [userId]);
 
-  if (loading) return <div className="p-20 text-center font-black animate-pulse text-orange-600 uppercase tracking-widest">Generating Analytics...</div>;
+  if (loading) return (
+    <div className="flex flex-col items-center justify-center py-20 md:py-32 px-4 space-y-4">
+      <div className="w-12 h-12 border-4 border-slate-900 border-t-transparent rounded-full animate-spin"></div>
+      <p className="font-black text-slate-900 animate-pulse uppercase tracking-tight text-[10px]">Processing Analytics...</p>
+    </div>
+  );
 
   const now = new Date();
   const currentMonth = now.getMonth();
   const currentYear = now.getFullYear();
 
-  // Aggregate current month data
   const currentMonthTrxs = transactions.filter(t => {
     const d = new Date(t.transactionDate);
     return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
@@ -74,11 +92,7 @@ export default function Reports() {
   const income = currentMonthTrxs.filter(t => t.type === 'INCOME').reduce((s, t) => s + (t.amount || 0), 0);
   const expenses = currentMonthTrxs.filter(t => t.type === 'EXPENSE').reduce((s, t) => s + (t.amount || 0), 0);
   const netSavings = income - expenses;
-  const savingsRate = income > 0 ? ((netSavings / income) * 100).toFixed(1) : 0;
-  const savingsGoal = 40.0;
-  const savingsRateColor = savingsRate >= savingsGoal ? 'bg-orange-600' : 'bg-orange-400';
-
-  // Last Month Data for simple trend comparisons
+  
   const lastMonth = currentMonth === 0 ? 11 : currentMonth - 1;
   const lastMonthYear = currentMonth === 0 ? currentYear - 1 : currentYear;
   const lastMonthTrxs = transactions.filter(t => {
@@ -90,17 +104,13 @@ export default function Reports() {
   const lastExpenses = lastMonthTrxs.filter(t => t.type === 'EXPENSE').reduce((s, t) => s + (t.amount || 0), 0);
   
   const calculateTrend = (current, last) => {
-    if (last === 0) {
-        if (current === 0) return 0;
-        return 100;
-    }
+    if (last === 0) return current === 0 ? 0 : 100;
     return (((current - last) / last) * 100).toFixed(1);
   };
 
   const incomeTrend = calculateTrend(income, lastIncome);
   const expenseTrend = calculateTrend(expenses, lastExpenses);
 
-  // Category Velocity
   const expenseTrxs = currentMonthTrxs.filter(t => t.type === 'EXPENSE');
   const catVelocity = {};
   expenseTrxs.forEach(t => {
@@ -115,41 +125,30 @@ export default function Reports() {
   const pieData = topCats.map(([name, val]) => ({ name, value: val }));
   if (otherCats > 0) pieData.push({ name: 'Other', value: otherCats });
   
-  const COLORS = ['#ea580c', '#0369a1', '#9a3412', '#94a3b8']; // orange-600, sky-700, orange-800, slate-400
+  const COLORS = ['#ea580c', '#0369a1', '#f97316', '#7dd3fc'];
 
-  // Cash Flow Dynamics (Last 6 Months)
   const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
   const dynamicsData = [];
   for (let i = 5; i >= 0; i--) {
       let m = currentMonth - i;
       let y = currentYear;
-      if (m < 0) {
-          m += 12;
-          y -= 1;
-      }
+      if (m < 0) { m += 12; y -= 1; }
       const mTrxs = transactions.filter(t => {
           const d = new Date(t.transactionDate);
           return d.getMonth() === m && d.getFullYear() === y;
       });
-      const mIn = mTrxs.filter(t => t.type === 'INCOME').reduce((s,t) => s + (t.amount || 0), 0);
-      const mOut = mTrxs.filter(t => t.type === 'EXPENSE').reduce((s,t) => s + (t.amount || 0), 0);
       dynamicsData.push({
           monthName: monthNames[m],
-          inflow: mIn,
-          outflow: mOut
+          inflow: mTrxs.filter(t => t.type === 'INCOME').reduce((s,t) => s + (t.amount || 0), 0),
+          outflow: mTrxs.filter(t => t.type === 'EXPENSE').reduce((s,t) => s + (t.amount || 0), 0)
       });
   }
-  const maxDynamic = Math.max(...dynamicsData.map(d => Math.max(d.inflow, d.outflow))) || 1;
 
-  // Historical Performance Table (last 4 months)
   const historyTable = [];
   for (let i = 0; i < 4; i++) {
         let m = currentMonth - i;
         let y = currentYear;
-        if (m < 0) {
-            m += 12;
-            y -= 1;
-        }
+        if (m < 0) { m += 12; y -= 1; }
         const mTrxs = transactions.filter(t => {
             const d = new Date(t.transactionDate);
             return d.getMonth() === m && d.getFullYear() === y;
@@ -157,274 +156,201 @@ export default function Reports() {
         const mIn = mTrxs.filter(t => t.type === 'INCOME').reduce((s,t) => s + (t.amount || 0), 0);
         const mOut = mTrxs.filter(t => t.type === 'EXPENSE').reduce((s,t) => s + (t.amount || 0), 0);
         const net = mIn - mOut;
-        let status = 'Balanced';
-        let statusColor = 'bg-orange-100 text-orange-600';
-        if (net > 0) { status = 'Surplus'; statusColor = 'bg-sky-100 text-sky-700'; }
-        if (net < 0) { status = 'Deficit'; statusColor = 'bg-red-100 text-red-600'; }
+        let status = 'BALANCED';
+        let statusColor = 'bg-slate-50 text-slate-500';
+        if (net > 0) { status = 'SURPLUS'; statusColor = 'bg-emerald-50 text-emerald-600'; }
+        if (net < 0) { status = 'DEFICIT'; statusColor = 'bg-red-50 text-red-600'; }
         
-        historyTable.push({
-            period: `${monthNames[m]} ${y}`,
-            inflow: mIn,
-            outflow: mOut,
-            net,
-            status,
-            statusColor
-        });
+        historyTable.push({ period: `${monthNames[m]} ${y}`, inflow: mIn, outflow: mOut, net, status, statusColor });
   }
 
   const downloadExcel = () => {
-    if (!transactions || transactions.length === 0) {
-      toast.error("No data to download");
-      return;
-    }
-
-    const excelData = transactions.map(t => ({
-      "Transaction ID": t.transactionId,
-      "Date": new Date(t.transactionDate).toLocaleDateString(),
-      "Type": t.type,
-      "Amount": t.amount,
-      "Category": t.category?.name || "N/A",
-      "Note": t.note || ""
-    }));
-
-    const worksheet = XLSX.utils.json_to_sheet(excelData);
+    if (!transactions.length) return toast.error("No data available");
+    const worksheet = XLSX.utils.json_to_sheet(transactions.map(t => ({
+      "ID": t.transactionId, "Date": new Date(t.transactionDate).toLocaleDateString(),
+      "Type": t.type, "Amount": t.amount, "Category": t.category?.name || "N/A"
+    })));
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "Transactions");
-    
-    XLSX.writeFile(workbook, `finflow_report_${currentMonth + 1}_${currentYear}.xlsx`);
-    toast.success("Report downloaded in Excel format");
+    const filename = localStorage.getItem('isDemoMode') === 'true' ? 'FinFlowReportDemo' : `FinFlow_Report_${Date.now()}`;
+    XLSX.writeFile(workbook, `${filename}.xlsx`);
+    toast.success("Archive exported successfully");
   };
 
   return (
-    <div className="animate-in fade-in slide-in-from-bottom-5 duration-1000 pb-12 max-w-[1600px] mx-auto text-slate-900">
+    <div className="w-full max-w-7xl mx-auto space-y-8 animate-in fade-in duration-1000 pb-20 px-4">
       
-      {/* Header Section */}
-      <section className="flex justify-between items-end mb-10 px-4">
-        <div>
-          <h2 className="text-4xl font-extrabold tracking-tighter">Financial Reports & Analytics</h2>
-          <p className="text-slate-500 mt-1">Detailed insights into your capital flow and spending velocity.</p>
+      {/* Dynamic Header */}
+      <div className="flex flex-col md:flex-row justify-between items-center gap-4 px-2">
+        <div className="space-y-0.5">
+           <h2 className="text-2xl font-bold text-slate-900 tracking-tight">Performance Reports</h2>
+           <p className="text-slate-400 font-bold text-[10px] uppercase tracking-[0.2em]">Dynamic Financial Analytics</p>
         </div>
-        <button onClick={downloadExcel} className="flex items-center gap-2 bg-slate-200 text-slate-700 px-6 py-3 rounded-md font-semibold transition-all hover:bg-slate-300">
-          <Download size={18} />
-          Download Report
+        <button onClick={downloadExcel} className="flex items-center gap-2 px-5 py-2.5 bg-slate-900 text-white rounded-xl font-bold shadow-md hover:bg-orange-600 transition-all text-xs uppercase tracking-widest">
+          <Download size={16} />
+          <span>Export Excel</span>
         </button>
-      </section>
-
-      {/* Top Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10 px-4">
-        
-        {/* Income */}
-        <div className="bg-white p-6 rounded-md shadow-sm border-l-4 border-orange-600 group hover:shadow-lg transition-all duration-300 flex flex-col justify-between">
-          <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Total Income</p>
-          <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1 mt-1">
-            <div className="flex items-baseline gap-1">
-                <span className="text-2xl 2xl:text-3xl font-extrabold tracking-tight" title={`${income.toLocaleString()} đ`}>
-                   {income.toLocaleString()}
-                </span>
-                <span className="text-lg font-bold text-slate-500">đ</span>
-            </div>
-            <span className={`font-bold text-sm flex items-center gap-1 whitespace-nowrap ${incomeTrend >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
-              {incomeTrend > 0 ? '+' : ''}{incomeTrend}% 
-              <TrendingUp size={14} className={incomeTrend < 0 ? 'rotate-180' : ''} />
-            </span>
-          </div>
-        </div>
-
-        {/* Expenses */}
-        <div className="bg-white p-6 rounded-md shadow-sm border-l-4 border-slate-300 group hover:shadow-lg transition-all duration-300 flex flex-col justify-between">
-          <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Total Expenses</p>
-          <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1 mt-1">
-            <div className="flex items-baseline gap-1">
-                <span className="text-2xl 2xl:text-3xl font-extrabold tracking-tight" title={`${expenses.toLocaleString()} đ`}>
-                   {expenses.toLocaleString()}
-                </span>
-                <span className="text-lg font-bold text-slate-500">đ</span>
-            </div>
-            <span className={`font-bold text-sm flex items-center gap-1 whitespace-nowrap ${expenseTrend >= 0 ? 'text-red-600' : 'text-emerald-600'}`}>
-              {expenseTrend > 0 ? '+' : ''}{expenseTrend}% 
-              <TrendingUp size={14} className={expenseTrend < 0 ? 'rotate-180' : ''} />
-            </span>
-          </div>
-        </div>
-
-        {/* Net Savings */}
-        <div className="bg-white p-6 rounded-md shadow-sm border-l-4 border-sky-600 group hover:shadow-lg transition-all duration-300 flex flex-col justify-between">
-          <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Net Savings</p>
-          <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1 mt-1">
-            <div className="flex items-baseline gap-1">
-                <span className="text-2xl 2xl:text-3xl font-extrabold tracking-tight" title={`${netSavings.toLocaleString()} đ`}>
-                   {netSavings.toLocaleString()}
-                </span>
-                <span className="text-lg font-bold text-slate-500">đ</span>
-            </div>
-            <span className={`font-bold text-sm flex items-center gap-1 whitespace-nowrap ${netSavings >= 0 ? 'text-sky-600' : 'text-red-600'}`}>
-               <TrendingUp size={14} className={netSavings < 0 ? 'rotate-180' : ''} />
-            </span>
-          </div>
-        </div>
       </div>
 
-      {/* Middle Row: Charts */}
-      <div className="grid grid-cols-12 gap-8 mb-12 px-4">
+      {/* KPI Cards Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {[
+          { label: 'Total Inflow', val: income, trend: incomeTrend, color: 'emerald' },
+          { label: 'Total Outflow', val: expenses, trend: expenseTrend, color: 'red' },
+          { label: 'Net Liquidity', val: netSavings, trend: null, color: 'slate' }
+        ].map((card, i) => (
+          <div key={i} className="bg-white p-5 rounded-[24px] border border-slate-100 shadow-sm flex flex-col justify-between group hover:border-slate-200 hover:shadow-md transition-all">
+            <div className="flex justify-between items-start mb-2">
+              <p className="text-[10px] font-black text-slate-400 uppercase tracking-tight">{card.label}</p>
+              {card.trend !== null && (
+                <div className={`px-2 py-0.5 rounded-lg text-[10px] font-black flex items-center gap-1 ${parseFloat(card.trend) >= 0 ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-600'}`}>
+                  {parseFloat(card.trend) > 0 ? <TrendingUp size={12}/> : <TrendingDown size={12}/>}
+                  {Math.abs(parseFloat(card.trend))}%
+                </div>
+              )}
+            </div>
+            <div className="flex items-baseline gap-1.5">
+              <span className="text-2xl font-black text-slate-900 tracking-tighter">{card.val.toLocaleString()}</span>
+              <span className="text-[11px] font-bold text-slate-400">đ</span>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Analytics Core Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         
-        {/* Category Velocity (Donut) */}
-        <div className="col-span-12 lg:col-span-7 bg-white p-8 rounded-md shadow-sm">
-          <div className="flex justify-between items-center mb-10">
-            <h3 className="text-xl font-extrabold tracking-tight">Category Velocity</h3>
-            <select className="bg-slate-100 border-none text-xs font-bold uppercase tracking-wider rounded px-3 py-1 ring-0 outline-none text-slate-600">
-              <option>Current Month</option>
-              <option>Previous Mth</option>
-            </select>
+        {/* Category Yield (Donut) - Col Span 1 */}
+        <div className="bg-white p-6 rounded-[32px] border border-slate-100 shadow-sm lg:col-span-1 flex flex-col gap-4 h-fit">
+          <div className="flex items-center gap-3">
+             <div className="p-2.5 bg-slate-50 rounded-2xl text-orange-600"><PieIcon size={18} /></div>
+             <h3 className="text-[11px] font-black text-slate-800 uppercase tracking-tight">Category Yield</h3>
           </div>
           
-          <div className="flex items-center gap-12">
-            {/* Recharts Pie Chart representation */}
-            <div className="relative h-56 w-56 flex items-center justify-center">
+          <div className="flex flex-row items-center justify-center gap-4 py-4 uppercase">
+            <div className="relative size-60 shrink-0">
                 {expenses > 0 ? (
                   <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
-                      <Pie
-                        data={pieData}
-                        cx="50%"
-                        cy="50%"
-                        innerRadius={70}
-                        outerRadius={90}
-                        paddingAngle={5}
-                        dataKey="value"
-                        stroke="none"
-                        cornerRadius={4}
+                      <Pie 
+                        data={pieData} 
+                        cx="50%" cy="50%" 
+                        innerRadius={68} outerRadius={78} 
+                        paddingAngle={5} dataKey="value" 
+                        stroke="none" cornerRadius={6}
+                        onMouseEnter={(_, index) => setActiveIndex(index)}
+                        onMouseLeave={() => setActiveIndex(null)}
                       >
-                        {pieData.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                        ))}
+                        {pieData.map((e, idx) => <Cell key={idx} fill={COLORS[idx % COLORS.length]} />)}
                       </Pie>
-                      <Tooltip formatter={(value) => `${value.toLocaleString()} đ`} />
+                      <Tooltip contentStyle={{ display: 'none' }} />
                     </PieChart>
                   </ResponsiveContainer>
                 ) : (
-                    <div className="text-slate-300 font-bold">No Expenses</div>
+                  <div className="flex h-full items-center justify-center text-slate-200 uppercase font-black text-[8px] tracking-tight text-center">No Records</div>
                 )}
-                {/* Center text overlay */}
-                <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none px-2 text-center overflow-hidden">
-                  <span className="text-[10px] text-slate-400 uppercase font-bold tracking-widest mt-1">Total Spend</span>
-                  <span className="text-xl font-extrabold text-slate-900 truncate w-full" title={`${expenses.toLocaleString()} đ`}>
-                    {formatCompactNumber(expenses)}
+                <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none px-2 text-center">
+                  <span className="text-[9px] text-slate-400 font-black uppercase tracking-tight mb-1 truncate max-w-[120px]">
+                    {activeIndex !== null ? pieData[activeIndex].name : 'Total Flow'}
+                  </span>
+                  <span className="text-xl font-black text-slate-900 tracking-tighter leading-none">
+                    {activeIndex !== null ? formatCompactNumber(pieData[activeIndex].value) : formatCompactNumber(expenses)}
                   </span>
                 </div>
             </div>
 
-            {/* Legend Component */}
-            <div className="flex-1 space-y-6">
-               {pieData.length > 0 ? pieData.map((entry, idx) => (
-                 <div key={idx} className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <span className="h-3 w-3 rounded-full" style={{backgroundColor: COLORS[idx % COLORS.length]}}></span>
-                      <span className="font-semibold text-slate-800">{entry.name}</span>
+            <div className="flex flex-col gap-1 w-full max-w-[200px]">
+               {pieData.length > 0 ? pieData.map((e, idx) => (
+                 <div key={idx} className="flex items-center gap-3 py-1.5 px-2 group hover:bg-slate-50 rounded-xl transition-all">
+                    <div className="flex items-center gap-2 flex-1">
+                       <span className="shrink-0 h-1.5 w-1.5 rounded-full" style={{backgroundColor: COLORS[idx % COLORS.length]}}></span>
+                       <span className="text-[10px] font-bold text-slate-500 uppercase group-hover:text-slate-900 transition-colors truncate">{e.name}</span>
                     </div>
-                    <span className="font-extrabold text-slate-900">{((entry.value / expenses) * 100).toFixed(0)}%</span>
+                    <span className="text-[10px] font-black text-slate-900 w-10 text-right">{((e.value / expenses) * 100).toFixed(0)}%</span>
                  </div>
-               )) : (
-                 <div className="text-slate-400 italic">Add expenses to see categories...</div>
-               )}
+               )) : null}
             </div>
           </div>
         </div>
 
-        {/* Cash Flow Dynamics (Bar) */}
-        <div className="col-span-12 lg:col-span-5 bg-white p-8 rounded-md shadow-sm">
-          <h3 className="text-xl font-extrabold tracking-tight mb-10">Cash Flow Dynamics</h3>
-          <div className="flex items-end justify-between h-56 gap-2 border-b border-slate-100 pb-2">
-            
-            {dynamicsData.map((data, idx) => (
-               <div key={idx} className="flex-1 flex flex-col items-center gap-1 group h-full">
-                  <div className="w-full flex justify-center gap-[2px] items-end h-full">
-                     <div 
-                        className="w-4 bg-sky-700 rounded-t-sm transition-all group-hover:opacity-80" 
-                        style={{ height: `${(data.inflow / maxDynamic) * 100}%`, minHeight: data.inflow > 0 ? '10px' : '0px' }}
-                        title={`Inflow: ${data.inflow.toLocaleString()} đ`}
-                     ></div>
-                     <div 
-                        className="w-4 bg-orange-600 rounded-t-sm transition-all group-hover:opacity-80" 
-                        style={{ height: `${(data.outflow / maxDynamic) * 100}%`, minHeight: data.outflow > 0 ? '10px' : '0px' }}
-                        title={`Outflow: ${data.outflow.toLocaleString()} đ`}
-                     ></div>
-                  </div>
-                  <span className="text-[10px] font-bold text-slate-400 uppercase mt-2">{data.monthName}</span>
-               </div>
-            ))}
+        {/* Cash Flow Dynamics (Modern Bar Chart) - Col Span 2 */}
+        <div className="bg-white p-6 rounded-[28px] border border-slate-100 shadow-sm lg:col-span-2 border-b-4 border-b-sky-600/10 h-full flex flex-col">
+          <div className="flex justify-between items-center mb-10">
+            <div className="flex items-center gap-3">
+               <div className="p-2.5 bg-slate-50 rounded-2xl text-sky-700"><BarChart3 size={18} /></div>
+               <h3 className="text-[11px] font-black text-slate-800 uppercase tracking-tight">Flow Momentum</h3>
+            </div>
+            <div className="flex gap-4 text-[10px] font-black uppercase tracking-tight">
+               <div className="flex items-center gap-2 text-sky-800"><span className="h-2 w-2 rounded-full bg-sky-700"></span> Current In</div>
+               <div className="flex items-center gap-2 text-orange-600"><span className="h-2 w-2 rounded-full bg-orange-600"></span> Current Out</div>
+            </div>
           </div>
-
-          <div className="mt-6 flex gap-6 text-[10px] font-bold uppercase tracking-widest text-slate-500">
-             <div className="flex items-center gap-2">
-                <span className="h-2 w-2 rounded-full bg-sky-700"></span> Inflow
-             </div>
-             <div className="flex items-center gap-2">
-                <span className="h-2 w-2 rounded-full bg-orange-600"></span> Outflow
-             </div>
+          
+          <div className="flex-1 w-full min-h-[300px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={dynamicsData}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                <XAxis dataKey="monthName" axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 700, fill: '#94a3b8' }} dy={10} />
+                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 700, fill: '#94a3b8' }} tickFormatter={formatCompactNumber} width={40} />
+                <Tooltip 
+                  cursor={{ fill: '#f8fafc', radius: 4 }}
+                  contentStyle={{ backgroundColor: '#fff', borderRadius: '16px', border: 'none', boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.1)', fontSize: '11px', fontWeight: 'bold' }}
+                />
+                <Bar dataKey="inflow" fill="#0369a1" radius={[4, 4, 0, 0]} barSize={12} />
+                <Bar dataKey="outflow" fill="#ea580c" radius={[4, 4, 0, 0]} barSize={12} />
+              </BarChart>
+            </ResponsiveContainer>
           </div>
         </div>
       </div>
 
-      {/* Spending Insights */}
-      <section className="mb-12 px-4">
-        <h3 className="text-xl font-extrabold tracking-tight mb-6">Spending Insights</h3>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          
-          <div className="bg-red-50 p-6 rounded-md relative overflow-hidden group border border-red-100/50">
-             <div className="absolute -right-4 -top-4 opacity-5 group-hover:opacity-10 transition-all text-red-600">
-               <AlertTriangle size={120} strokeWidth={1} />
-             </div>
-             <span className="inline-block bg-red-600 text-white text-[10px] font-bold uppercase px-2 py-0.5 rounded-sm mb-3">Goal Warning</span>
-             <h4 className="font-extrabold text-lg mb-2 text-slate-900">Savings Rate Low</h4>
-             <p className="text-slate-600 text-sm leading-relaxed">Your target is {savingsGoal}%, but current month is at {savingsRate}%. Consider reviewing non-essential spending this week.</p>
-          </div>
-
-          <div className="bg-sky-50 p-6 rounded-md relative overflow-hidden group border border-sky-100/50">
-             <div className="absolute -right-4 -top-4 opacity-5 group-hover:opacity-10 transition-all text-sky-700">
-               <Zap size={120} strokeWidth={1} />
-             </div>
-             <span className="inline-block bg-sky-700 text-white text-[10px] font-bold uppercase px-2 py-0.5 rounded-sm mb-3">Efficiency Gain</span>
-             <h4 className="font-extrabold text-lg mb-2 text-slate-900">{topCats.length > 0 ? topCats[0][0] : 'Expense'} Insight</h4>
-             <p className="text-slate-600 text-sm leading-relaxed">Your highest expense category accounts for {topCats.length > 0 && expenses > 0 ? ((topCats[0][1] / expenses) * 100).toFixed(0) : 0}% of all spending. Monitoring this helps retention.</p>
-          </div>
-
-          <div className="bg-orange-50 p-6 rounded-md relative overflow-hidden group border border-orange-100">
-             <div className="absolute -right-4 -top-4 opacity-5 group-hover:opacity-10 transition-all text-orange-600">
-               <Rocket size={120} strokeWidth={1} />
-             </div>
-             <span className="inline-block bg-orange-700 text-white text-[10px] font-bold uppercase px-2 py-0.5 rounded-sm mb-3">Growth Opportunity</span>
-             <h4 className="font-extrabold text-lg mb-2 text-slate-900">Available Surplus</h4>
-             <p className="text-slate-600 text-sm leading-relaxed">You have generated {netSavings > 0 ? netSavings.toLocaleString() : 0} đ in net surplus this period. Allocate to a new goal to boost future returns.</p>
-          </div>
-
-        </div>
-      </section>
-
-      {/* Historical Performance Table */}
-      <section className="mx-4 bg-white rounded-md shadow-sm overflow-hidden mb-12">
-         <div className="p-8 border-b border-slate-100">
-            <h3 className="text-xl font-extrabold tracking-tight">Historical Performance</h3>
+      {/* Historical Performance Table - Strategic Log */}
+      <section className="bg-white rounded-[32px] border border-slate-100 shadow-sm overflow-hidden border-b-4 border-b-slate-100">
+         <div className="px-4 md:px-8 py-5 md:py-6 border-b border-slate-50 flex justify-between items-center bg-slate-50/10">
+            <div className="flex items-center gap-3">
+               <div className="p-2.5 bg-white rounded-2xl border border-slate-100 text-slate-500"><Activity size={20} /></div>
+               <h3 className="text-sm font-black text-slate-800 tracking-tight uppercase">Strategic History Log</h3>
+            </div>
+            <div className="flex items-center gap-2 px-3 py-1 bg-slate-100/50 rounded-full">
+                <Layers size={12} className="text-slate-400" />
+                <span className="text-[9px] font-black text-slate-500 uppercase tracking-tight">Verified Archival Ledger</span>
+            </div>
          </div>
-         <div className="overflow-x-auto">
-             <table className="w-full text-left">
-                <thead className="bg-slate-50">
-                   <tr>
-                      <th className="px-8 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest whitespace-nowrap">Period</th>
-                      <th className="px-8 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Primary Inflow</th>
-                      <th className="px-8 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Core Outflow</th>
-                      <th className="px-8 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest text-right">Net Position</th>
-                      <th className="px-8 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest text-right">Status</th>
+
+         <div className="overflow-x-auto scrollbar-hide">
+             <table className="w-full text-left table-fixed min-w-[900px]">
+                <thead>
+                    <tr className="bg-slate-50/50 border-b border-slate-100">
+                      <th className="w-[180px] px-4 md:px-8 py-4 text-[11px] font-black text-slate-500 uppercase tracking-tight whitespace-nowrap">Operational Period</th>
+                      <th className="w-[120px] px-4 md:px-8 py-4 text-[11px] font-black text-slate-500 uppercase tracking-tight text-right whitespace-nowrap">Cash Inflow</th>
+                      <th className="w-[120px] px-4 md:px-8 py-4 text-[11px] font-black text-slate-500 uppercase tracking-tight text-right whitespace-nowrap">Cash Outflow</th>
+                      <th className="w-[150px] px-4 md:px-8 py-4 text-[11px] font-black text-slate-500 uppercase tracking-tight text-right whitespace-nowrap">Net Asset Value</th>
+                      <th className="w-[140px] px-4 md:px-8 py-4 text-[11px] font-black text-slate-500 uppercase tracking-tight text-right whitespace-nowrap">Registry Status</th>
                    </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                    {historyTable.map((row, idx) => (
-                      <tr key={idx} className="hover:bg-slate-50 transition-colors">
-                         <td className="px-8 py-6 font-bold text-slate-900 whitespace-nowrap">{row.period}</td>
-                         <td className="px-8 py-6 text-sm whitespace-nowrap">{row.inflow.toLocaleString()} đ</td>
-                         <td className="px-8 py-6 text-sm text-slate-500 whitespace-nowrap">{row.outflow.toLocaleString()} đ</td>
-                         <td className="px-8 py-6 text-sm font-bold text-right whitespace-nowrap">{row.net >= 0 ? '+' : ''}{row.net.toLocaleString()} đ</td>
-                         <td className="px-8 py-6 text-right whitespace-nowrap">
-                            <span className={`inline-block text-[10px] font-bold uppercase px-3 py-1 rounded-full ${row.statusColor}`}>
+                      <tr key={idx} className="hover:bg-slate-50 transition-all group">
+                         <td className="px-4 md:px-8 py-3.5 text-[13px] font-bold text-slate-800 flex items-center gap-3 whitespace-nowrap">
+                            <div className="size-8 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400 group-hover:bg-orange-50 group-hover:text-orange-600 transition-colors">
+                                <Calendar size={14} />
+                            </div>
+                            {row.period}
+                         </td>
+                         <td className="px-4 md:px-8 py-3.5 text-right font-bold text-slate-600 transition-colors group-hover:text-slate-900 whitespace-nowrap">
+                            {row.inflow.toLocaleString()} <span className="text-[10px] text-slate-400">đ</span>
+                         </td>
+                         <td className="px-4 md:px-8 py-3.5 text-right font-bold text-slate-500 transition-colors group-hover:text-slate-900 whitespace-nowrap">
+                            {row.outflow.toLocaleString()} <span className="text-[10px] text-slate-400">đ</span>
+                         </td>
+                         <td className="px-4 md:px-8 py-3.5 text-right font-black text-slate-900 transition-colors whitespace-nowrap">
+                            <span className={row.net >= 0 ? 'text-emerald-600' : 'text-red-600'}>
+                                {row.net >= 0 ? '+' : ''}{row.net.toLocaleString()}
+                            </span>
+                            <span className="text-[10px] text-slate-400 ml-1">đ</span>
+                         </td>
+                         <td className="px-4 md:px-8 py-3.5 text-right whitespace-nowrap">
+                            <span className={`inline-flex items-center justify-center min-w-[70px] text-[9px] font-black uppercase px-2.5 py-1.5 rounded-xl ${row.statusColor} shadow-sm border border-black/5`}>
                                {row.status}
                             </span>
                          </td>
@@ -433,9 +359,10 @@ export default function Reports() {
                 </tbody>
              </table>
          </div>
-         <div className="p-4 bg-slate-50 text-center">
-            <button className="text-xs font-bold text-orange-700 uppercase tracking-widest hover:underline transition-all">
-                View 12 Month Archive
+         
+         <div className="p-6 bg-slate-50/20 text-center border-t border-slate-50">
+            <button className="w-full sm:w-auto px-6 py-2.5 bg-white border border-slate-200 rounded-2xl text-[10px] font-black text-slate-500 uppercase tracking-wider hover:text-orange-600 hover:border-orange-200 hover:shadow-lg transition-all flex items-center justify-center gap-2 mx-auto active:scale-95">
+                <Layers size={14} /> Deep Analysis & Archive Access
             </button>
          </div>
       </section>

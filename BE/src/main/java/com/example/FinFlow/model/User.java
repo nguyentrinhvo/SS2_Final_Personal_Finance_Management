@@ -46,5 +46,6 @@ public class User {
     @JsonIgnore
     private List<Goal> goals;
 
+    @Column(name = "avatar_url", columnDefinition = "TEXT")
     private String avatarUrl;
 }

@@ -26,6 +26,7 @@ import {
   CheckCircle2,
   UploadCloud
 } from 'lucide-react';
+import { MOCK_DATA } from '../../utils/mockData';
 
 const CAT_API = 'http://localhost:8080/api/categories';
 const TRX_API = 'http://localhost:8080/api/transactions';
@@ -43,6 +44,14 @@ export default function Categories() {
   const userId = localStorage.getItem('userId');
 
   const fetchData = async () => {
+    const isDemo = localStorage.getItem('isDemoMode') === 'true';
+    if (isDemo) {
+      setCategories(MOCK_DATA.categories);
+      setTransactions(MOCK_DATA.transactions);
+      setBudgets(MOCK_DATA.budgets);
+      return;
+    }
+
     if (!userId) return;
     try {
       const [catRes, trxRes, bdgRes] = await Promise.all([
@@ -171,109 +180,103 @@ export default function Categories() {
     .sort((a, b) => b.count - a.count)[0] || { name: 'N/A', count: 0 };
 
   return (
-    <div className="max-w-[1400px] mx-auto w-full p-4 lg:p-10 space-y-8 animate-in fade-in duration-700 pb-20">
-      
-      <section className="flex justify-end">
+    <div className="w-full max-w-7xl mx-auto space-y-6 animate-in fade-in duration-700 pb-12">
+      <div className="flex justify-between items-center gap-4 px-2">
+        <div className="space-y-0.5">
+           <h2 className="text-2xl font-bold text-slate-900 tracking-tight">Categories</h2>
+           <p className="text-slate-400 font-bold text-[10px] uppercase tracking-[0.2em]">Architecture Control</p>
+        </div>
         <button 
-          onClick={() => {
-            setFormData({ name: '', type: 'EXPENSE', imageUrl: '' });
-            setIsEditMode(false);
-            setEditingCatId(null);
-            setIsModalOpen(true);
-          }}
-          className="bg-slate-900 text-white font-black px-8 py-4 rounded-2xl shadow-xl shadow-slate-900/10 flex items-center gap-3 transition-all hover:scale-[1.02] active:scale-95 group shrink-0 text-sm uppercase tracking-widest"
+          onClick={() => { setFormData({ name: '', type: 'EXPENSE', imageUrl: '' }); setIsEditMode(false); setEditingCatId(null); setIsModalOpen(true); }}
+          className="flex items-center gap-2 px-5 py-2.5 bg-slate-900 text-white rounded-xl font-bold shadow-md hover:bg-orange-600 transition-all text-xs uppercase tracking-widest"
         >
-          <PlusCircle size={20} className="group-hover:rotate-90 transition-transform" />
-          <span>New Architecture</span>
+          <PlusCircle size={16} />
+          <span>New Structure</span>
         </button>
-      </section>
+      </div>
 
-      <div className="grid grid-cols-12 gap-10">
-        <div className="col-span-12 lg:col-span-8 space-y-12">
-          <section className="space-y-6">
-            <div className="flex items-center gap-6">
-              <h2 className="text-xl font-black tracking-tight text-slate-800 uppercase">Core Categories</h2>
-              <div className="h-[1px] flex-1 bg-slate-100"></div>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2 space-y-6">
+          <section className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest">Core Categories</h3>
+              <div className="h-px flex-1 bg-slate-100 ml-4"></div>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {coreCategories.map(cat => (
-                <div key={cat.categoryId} className="group relative bg-white p-6 rounded-[32px] border border-slate-50 flex items-center gap-6 transition-all hover:shadow-xl hover:border-orange-100">
+                <div key={cat.categoryId} className="group relative bg-white p-4 rounded-2xl border border-slate-100 flex items-center gap-4 transition-all hover:border-orange-200 hover:shadow-sm">
                   {cat.imageUrl ? (
-                    <div className="size-14 rounded-2xl overflow-hidden shadow-sm flex items-center justify-center border border-slate-100 shrink-0 transition-all group-hover:scale-110">
+                    <div className="size-11 rounded-xl overflow-hidden shadow-sm flex items-center justify-center border border-slate-100 shrink-0 group-hover:scale-105 transition-transform">
                       <img src={cat.imageUrl} alt={cat.name} className="w-full h-full object-cover" />
                     </div>
                   ) : (
-                    <div className={`size-14 rounded-2xl flex items-center justify-center shrink-0 transition-all group-hover:scale-110 shadow-sm ${
-                      cat.type === 'INCOME' ? 'bg-green-50 text-green-600' : 'bg-slate-50 text-slate-600 group-hover:bg-orange-600 group-hover:text-white'
+                    <div className={`size-11 rounded-xl flex items-center justify-center shrink-0 transition-transform group-hover:scale-105 shadow-sm ${
+                      cat.type === 'INCOME' ? 'bg-green-50 text-green-600' : 'bg-slate-50 text-slate-600 group-hover:bg-orange-50 group-hover:text-orange-600'
                     }`}>
-                      {React.cloneElement(getIcon(cat.name), { size: 24 })}
+                      {React.cloneElement(getIcon(cat.name), { size: 18 })}
                     </div>
                   )}
                   <div className="flex-1 min-w-0">
-                    <div className="flex justify-between items-baseline">
-                      <h3 className="font-black text-slate-800 truncate uppercase tracking-tight">{cat.name}</h3>
-                    </div>
-                    <div className="text-xl font-black text-slate-900 tracking-tighter">{getCategorySpending(cat.categoryId).toLocaleString()} đ</div>
+                    <h4 className="text-sm font-bold text-slate-900 truncate uppercase tracking-tight group-hover:text-orange-600 transition-colors">{cat.name}</h4>
+                    <p className="text-base font-black text-slate-900 tracking-tight mt-0.5">{getCategorySpending(cat.categoryId).toLocaleString()} <span className="text-[10px] opacity-30">đ</span></p>
                   </div>
-                  <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <button 
-                      onClick={() => handleEditClick(cat)}
-                      className="p-2.5 bg-white/80 backdrop-blur-md rounded-xl text-slate-400 hover:text-orange-600 border border-slate-100 shadow-sm transition-all"
-                    >
-                      <Edit size={14} />
-                    </button>
-                  </div>
+                  <button 
+                    onClick={() => handleEditClick(cat)}
+                    className="opacity-0 group-hover:opacity-100 p-1.5 text-slate-300 hover:text-orange-600 hover:bg-white rounded-lg transition-all border border-transparent hover:border-slate-100"
+                  >
+                    <Edit size={12} />
+                  </button>
                 </div>
               ))}
             </div>
           </section>
 
-          <section className="space-y-6">
-            <div className="flex items-center gap-6">
-              <h2 className="text-xl font-black tracking-tight text-slate-800 uppercase">Custom Architecture</h2>
-              <div className="h-[1px] flex-1 bg-slate-100"></div>
+          <section className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest">Custom Architecture</h3>
+              <div className="h-px flex-1 bg-slate-100 ml-4"></div>
             </div>
-            <div className="bg-slate-50/30 rounded-[40px] p-2 space-y-2 border border-slate-50">
+            <div className="bg-white rounded-2xl border border-slate-100 overflow-hidden divide-y divide-slate-50">
               {customCategories.length === 0 ? (
-                <div className="p-12 text-center text-slate-300 font-bold italic flex flex-col items-center gap-4">
-                  <Shapes size={40} strokeWidth={1} />
-                  <span className="text-[10px] uppercase tracking-widest">No custom structures</span>
+                <div className="py-12 text-center space-y-3">
+                  <Shapes size={32} className="mx-auto text-slate-200" strokeWidth={1.5} />
+                  <p className="text-[10px] text-slate-400 uppercase tracking-widest font-bold">No custom structures found</p>
                 </div>
               ) : (
                 customCategories.map(cat => (
-                  <div key={cat.categoryId} className="flex items-center justify-between p-5 bg-white rounded-[28px] shadow-sm group hover:shadow-xl transition-all border border-transparent">
+                  <div key={cat.categoryId} className="flex items-center justify-between px-5 py-3.5 hover:bg-slate-50/50 transition-all group">
                     <div className="flex items-center gap-4">
                       {cat.imageUrl ? (
-                        <div className="size-12 rounded-xl overflow-hidden shadow-inner flex items-center justify-center border border-slate-100 group-hover:scale-110 transition-all">
+                        <div className="size-10 rounded-lg overflow-hidden border border-slate-100">
                           <img src={cat.imageUrl} alt={cat.name} className="w-full h-full object-cover" />
                         </div>
                       ) : (
-                        <div className="size-12 bg-slate-50 rounded-xl flex items-center justify-center text-slate-300 group-hover:bg-slate-900 group-hover:text-white transition-all shadow-inner">
-                          {getIcon(cat.name)}
+                        <div className="size-10 bg-slate-100 rounded-lg flex items-center justify-center text-slate-400 group-hover:bg-slate-900 group-hover:text-white transition-all">
+                          {React.cloneElement(getIcon(cat.name), { size: 16 })}
                         </div>
                       )}
                       <div>
-                        <h4 className="font-black text-slate-900 uppercase tracking-tight">{cat.name}</h4>
-                        <p className="text-[9px] text-slate-300 font-black uppercase tracking-widest">{cat.type}</p>
+                        <h4 className="text-xs font-bold text-slate-800 uppercase tracking-tight">{cat.name}</h4>
+                        <span className="text-[9px] font-bold text-slate-300 uppercase tracking-widest">{cat.type}</span>
                       </div>
                     </div>
-                    <div className="flex items-center gap-8">
+                    <div className="flex items-center gap-6">
                       <div className="text-right">
-                        <div className="font-black text-slate-900">{getCategorySpending(cat.categoryId).toLocaleString()} đ</div>
-                        <div className="text-[8px] font-bold text-slate-300 uppercase tracking-tighter">{getTransactionCount(cat.categoryId)} ENTRIES</div>
+                        <p className="text-sm font-black text-slate-900">{getCategorySpending(cat.categoryId).toLocaleString()} <span className="text-[10px] opacity-30">đ</span></p>
+                        <p className="text-[8px] font-bold text-slate-300 uppercase tracking-widest mt-0.5">{getTransactionCount(cat.categoryId)} Entries</p>
                       </div>
-                      <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                         <button 
                           onClick={() => handleEditClick(cat)}
-                          className="p-2.5 hover:bg-orange-50 rounded-xl text-slate-200 hover:text-orange-600 transition-all"
+                          className="p-1.5 text-slate-300 hover:text-orange-600 transition-colors"
                         >
-                          <Edit size={16} />
+                          <Edit size={14} />
                         </button>
                         <button 
                           onClick={() => handleDelete(cat.categoryId)}
-                          className="p-2.5 hover:bg-red-50 rounded-xl text-slate-200 hover:text-red-500 transition-all"
+                          className="p-1.5 text-slate-300 hover:text-red-500 transition-colors ml-1"
                         >
-                          <Trash2 size={16} />
+                          <Trash2 size={14} />
                         </button>
                       </div>
                     </div>
@@ -284,30 +287,30 @@ export default function Categories() {
           </section>
         </div>
 
-        <div className="col-span-12 lg:col-span-4 space-y-8">
-          <div className="bg-slate-900 text-white p-10 rounded-[48px] space-y-10 relative overflow-hidden shadow-2xl">
-            <div className="absolute -right-16 -top-16 size-48 bg-orange-600/20 blur-[60px] rounded-full"></div>
-            <div className="relative space-y-10">
-              <h3 className="text-2xl font-black tracking-tight">Financial Pulse</h3>
-              <div className="space-y-8">
+        <div className="space-y-6">
+          <div className="bg-slate-900 text-white p-5 rounded-2xl space-y-6 relative overflow-hidden shadow-xl h-fit">
+            <div className="absolute -right-8 -top-8 size-32 bg-orange-600/20 blur-[40px] rounded-full group-hover:scale-125 transition-transform duration-700"></div>
+            <div className="relative space-y-6">
+              <h3 className="text-lg font-bold tracking-tight border-b border-white/5 pb-4">Financial Pulse</h3>
+              <div className="space-y-5">
                 <div className="flex gap-4 group cursor-default">
-                  <div className="shrink-0 size-12 bg-white/5 border border-white/10 rounded-xl flex items-center justify-center text-orange-500 group-hover:bg-orange-600 group-hover:text-white transition-all">
-                    <Activity size={20} />
+                  <div className="shrink-0 size-10 bg-white/5 border border-white/10 rounded-xl flex items-center justify-center text-orange-500 group-hover:bg-orange-600 group-hover:text-white transition-all">
+                    <Activity size={16} />
                   </div>
                   <div>
-                    <p className="text-[9px] text-slate-500 font-black uppercase tracking-widest mb-0.5">Most Active Hub</p>
-                    <p className="text-lg font-black text-white uppercase">{mostUsed.name}</p>
-                    <p className="text-[10px] text-slate-400 font-medium italic">{mostUsed.count} records processed</p>
+                    <p className="text-[9px] text-slate-500 font-bold uppercase tracking-widest mb-0.5">Most Active Hub</p>
+                    <p className="text-base font-bold text-white uppercase">{mostUsed.name}</p>
+                    <p className="text-[9px] text-slate-400 font-medium italic">{mostUsed.count} records processed</p>
                   </div>
                 </div>
                 <div className="flex gap-4 group cursor-default">
-                  <div className="shrink-0 size-12 bg-white/5 border border-white/10 rounded-xl flex items-center justify-center text-blue-500 group-hover:bg-blue-600 group-hover:text-white transition-all">
-                    <Target size={20} />
+                  <div className="shrink-0 size-10 bg-white/5 border border-white/10 rounded-xl flex items-center justify-center text-blue-500 group-hover:bg-blue-600 group-hover:text-white transition-all">
+                    <Target size={16} />
                   </div>
                   <div>
-                    <p className="text-[9px] text-slate-500 font-black uppercase tracking-widest mb-0.5">Total Outflow</p>
-                    <p className="text-lg font-black text-white">{totals.expense.toLocaleString()} đ</p>
-                    <p className="text-[10px] text-slate-400 font-medium italic">Monthly Expenditure</p>
+                    <p className="text-[9px] text-slate-500 font-bold uppercase tracking-widest mb-0.5">Total Outflow</p>
+                    <p className="text-base font-bold text-white">{totals.expense.toLocaleString()} <span className="text-[10px] opacity-30">đ</span></p>
+                    <p className="text-[9px] text-slate-400 font-medium italic">Monthly Expenditure</p>
                   </div>
                 </div>
               </div>
@@ -318,16 +321,16 @@ export default function Categories() {
 
       {isModalOpen && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md flex items-center justify-center z-[500] p-4 animate-in fade-in duration-300">
-          <div className="bg-white rounded-[48px] shadow-2xl w-full max-w-md max-h-[90vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-500">
-            <div className="flex items-center justify-between p-10 pb-4 border-b border-slate-50">
+          <div className="bg-white rounded-[40px] shadow-2xl w-full max-w-md max-h-[90vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-500">
+            <div className="flex items-center justify-between p-6 pb-4 border-b border-slate-50">
                <div>
                   <h3 className="text-2xl font-black text-slate-800 tracking-tighter">{isEditMode ? 'Update' : 'New'} Structure</h3>
                   <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">{isEditMode ? 'Modification Protocol' : 'Expansion Protocol'}</p>
                </div>
               <button onClick={() => setIsModalOpen(false)} className="p-3 bg-slate-50 hover:bg-red-50 rounded-2xl text-slate-400 hover:text-red-500 transition-all"><X size={20} /></button>
             </div>
-            <div className="p-10 pt-6 overflow-y-auto scrollbar-hide">
-                <form onSubmit={handleSubmit} className="space-y-8">
+            <div className="p-6 pt-4 overflow-y-auto scrollbar-hide">
+                <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="space-y-2">
                     <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-2">Label Identity</label>
                     <input 
@@ -373,7 +376,7 @@ export default function Categories() {
                 </div>
                 <button 
                     type="submit"
-                    className="w-full bg-slate-900 text-white font-black py-6 rounded-[32px] shadow-2xl shadow-slate-900/40 transition-all hover:scale-[1.02] active:scale-95 text-xs uppercase tracking-widest mt-4"
+                    className="w-full bg-slate-900 text-white font-black py-4 rounded-2xl shadow-2xl shadow-slate-900/40 transition-all hover:scale-[1.02] active:scale-95 text-xs uppercase tracking-widest mt-4"
                 >
                     {isEditMode ? 'Apply Updates' : 'Initialize Category'}
                 </button>

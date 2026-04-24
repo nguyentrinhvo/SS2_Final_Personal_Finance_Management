@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@plugin "@tailwindcss/typography";
 
 :root {
   --text: #6b6375;
@@ -17,8 +18,7 @@
   --heading: system-ui, 'Segoe UI', Roboto, sans-serif;
   --mono: ui-monospace, Consolas, monospace;
 
-  font: 18px/145% var(--sans);
-  letter-spacing: 0.18px;
+  font: 16px/140% var(--sans);
   color-scheme: only light;
   color: var(--text);
   background: var(--bg);
@@ -39,15 +39,13 @@
 
 body {
   margin: 0;
-  overflow: hidden;
   width: 100vw;
-  height: 100vh;
+  min-height: 100vh;
 }
 
 #root {
   width: 100%;
-  height: 100vh;
-  overflow: hidden;
+  min-height: 100vh;
   display: flex;
   flex-direction: column;
 }
@@ -78,28 +76,12 @@ code {
   background: var(--code-bg);
 }
 
-/* Custom Scrollbar Styling */
+/* Global Scrollbar Reset - Hidden by default for a cleaner UI */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  display: none;
 }
-
-::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
-  border-radius: 10px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
-}
-
-/* Firefox */
 * {
-  scrollbar-width: thin;
-  scrollbar-color: #cbd5e1 transparent;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
 }
 

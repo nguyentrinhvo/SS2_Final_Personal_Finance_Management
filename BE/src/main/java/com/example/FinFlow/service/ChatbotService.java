@@ -7,6 +7,9 @@ import com.example.FinFlow.model.Category;
 import com.example.FinFlow.repository.TransactionRepository;
 import com.example.FinFlow.repository.AccountRepository;
 import com.example.FinFlow.repository.CategoryRepository;
+import com.example.FinFlow.repository.UserRepository;
+import com.example.FinFlow.service.TransactionService;
+import com.example.FinFlow.model.User;
 
 import com.google.genai.Client;
 import com.google.genai.types.*;
@@ -32,10 +35,16 @@ public class ChatbotService {
     private TransactionRepository transactionRepository;
 
     @Autowired
+    private TransactionService transactionService;
+
+    @Autowired
     private AccountRepository accountRepository;
 
     @Autowired
     private CategoryRepository categoryRepository;
+
+    @Autowired
+    private UserRepository userRepository;
 
     @Value("${gemini.api.key:}")
     private String geminiApiKey;
@@ -87,22 +96,32 @@ public class ChatbotService {
         }
         String availableAccounts = String.join(", ", accNames);
 
-        String prompt = "You are FinFlow Assistant, a financial expert. " +
-                "User ID: " + userId + ". Access to user financial data is implied. " +
-                "You can help manage transactions. " +
-                "If an image (receipt, bill, etc.) is provided, extract the transaction details (amount, note) using OCR and format it as an ADD_TRX tag. "
-                +
-                "If user wants to add, edit or delete, you must respond with a TAG at the start of your message followed by the actual text for the user. "
-                +
-                "When adding a transaction, provide a short, appropriate Category name. Try to pick from existing ones: ["
-                + availableCategories + "]. If none fits well, use 'Others'. " +
-                "Also provide a matched Account name from: [" + availableAccounts + "]. If not explicitly mentioned by user, pick the most logically fitting one (e.g. Bank for large amounts or Cash for small expenses). " +
-                "Tags: \n" +
+        List<Transaction> recentTrxs = transactionRepository.findByUser_UserIdOrderByTransactionDateDesc(userId, org.springframework.data.domain.PageRequest.of(0, 10));
+        StringBuilder trxContext = new StringBuilder("Recent transactions for reference:\n");
+        for (Transaction t : recentTrxs) {
+            trxContext.append(String.format("- ID:%d, %s, %s, %sđ, %s\n", 
+                t.getTransactionId(), 
+                t.getTransactionDate().toLocalDate(), 
+                t.getType(), 
+                t.getAmount(), 
+                t.getNote()));
+        }
+
+        String prompt = "You are FinFlow Assistant. User ID: " + userId + ". " +
+                trxContext.toString() + "\n" +
+                "Requirements for User Input:\n" +
+                "- Text: transaction name + amount + account name.\n" +
+                "- Image: image provided + account name.\n" +
+                "AI can Add, Delete, or Update transactions. To update, find the ID from the list above.\n" +
+                "When adding a transaction, pick a Category from: [" + availableCategories + "]. If none fits or user omits category, ALWAYS use 'Others'. " +
+                "Pick an Account from: [" + availableAccounts + "]. If the user omits the account name, you MUST use 'Unknown'. " +
+                "If 'Unknown' or 'Others' is used, you MUST add a notification advising the user to manually edit the transaction later. " +
+                "Respond with a TAG at the start: \n" +
                 "- [ADD_TRX:amount:type:category:account:note]: type must be INCOME or EXPENSE.\n" +
+                "- [EDIT_TRX:id:amount:type:category:account:note]\n" +
                 "- [DELETE_TRX:id]\n" +
                 "- [SUMMARY]\n" +
-                "Example: '[ADD_TRX:50000:EXPENSE:Food:Cash:Coffee] Got it! I've added a coffee expense of 50.000đ for you.' "
-                +
+                "Example: '[ADD_TRX:50000:EXPENSE:Others:Unknown:Coffee] Đã thêm cà phê 50,000đ. Lưu ý: Không xác định được tài khoản và danh mục, vui lòng cập nhật lại thủ công!'\n" +
                 "Now respond to: " + userMessage;
 
         try {
@@ -169,20 +188,18 @@ public class ChatbotService {
         String msg = userMessage.trim().toLowerCase();
 
         // --- HELP ---
-        if (msg.equals("help") || msg.equals("trợ giúp") || msg.equals("hướng dẫn")) {
-            return "🤖 **FinFlow Assistant - Hướng dẫn sử dụng:**\n\n" +
-                    "📌 **Thêm chi tiêu:**\n" +
-                    "   • \"thêm chi 50000 cà phê\"\n" +
-                    "   • \"chi 200000 ăn trưa\"\n\n" +
-                    "📌 **Thêm thu nhập:**\n" +
-                    "   • \"thêm thu 5000000 lương tháng 4\"\n" +
-                    "   • \"thu 1000000 freelance\"\n\n" +
-                    "📌 **Xóa giao dịch:**\n" +
-                    "   • \"xóa giao dịch 12\"\n" +
-                    "   • \"xóa 5\"\n\n" +
-                    "📌 **Tổng kết:**\n" +
-                    "   • \"tổng kết\"\n" +
-                    "   • \"báo cáo\"\n\n" +
+        if (msg.equals("help") || msg.equals("trợ giúp") || msg.equals("hướng dẫn") || msg.equals("guide")) {
+            return "🤖 **FinFlow AI - Hướng dẫn nhập liệu:**\n\n" +
+                    "📌 **Cú pháp nhập văn bản:**\n" +
+                    "   • *<Tên giao dịch> + <Số tiền> + <Tên tài khoản>*\n" +
+                    "   • Ví dụ: \"Trà sữa 50000 ví điện tử\"\n\n" +
+                    "📌 **Cú pháp nhập hình ảnh (Hóa đơn):**\n" +
+                    "   • *Tải ảnh lên + <Tên tài khoản>*\n" +
+                    "   • Ví dụ: \"Thanh toán bằng thẻ Techcombank\"\n\n" +
+                    "📌 **Sửa giao dịch (Edit):**\n" +
+                    "   • *Sửa giao dịch <ID> thành <Tên> + <Số tiền>*\n" +
+                    "   • Ví dụ: \"Sửa giao dịch 5 thành ăn tối 100k\"\n\n" +
+                    "⚠️ **Lưu ý:** Nếu không có tài khoản, hệ thống sẽ đánh dấu là 'Unknown'. Nếu không có danh mục phù hợp, hệ thống đánh dấu là 'Others'. Bạn có thể thay đổi sau ở danh sách giao dịch!\n\n" +
                     (useOfflineMode ? "⚡ Đang ở chế độ offline (API hết quota)" : "🟢 API Gemini đang hoạt động");
         }
 
@@ -237,12 +254,7 @@ public class ChatbotService {
         }
 
         return "🤖 Xin chào! Tôi là FinFlow Assistant (**chế độ offline**).\n\n" +
-                "Hiện tại tôi có thể giúp bạn:\n" +
-                "• **Thêm chi tiêu**: \"chi 50000 cà phê\"\n" +
-                "• **Thêm thu nhập**: \"thu 5000000 lương\"\n" +
-                "• **Xóa giao dịch**: \"xóa giao dịch 5\"\n" +
-                "• **Tổng kết**: \"tổng kết\"\n\n" +
-                "Gõ **help** để xem hướng dẫn chi tiết!";
+                "Gõ **guide** hoặc **hướng dẫn** để xem cú pháp AI chi tiết!";
     }
 
     private String addTransaction(String amountStr, TransactionType type, String note, Long userId) {
@@ -274,7 +286,8 @@ public class ChatbotService {
             t.setTransactionDate(LocalDateTime.now());
             t.setAccount(accounts.get(0));
             t.setCategory(selectedCategory);
-            transactionRepository.save(t);
+            t.setUser(userRepository.findById(userId).orElse(null));
+            transactionService.createTransaction(t);
 
             String typeLabel = type == TransactionType.INCOME ? "thu nhập" : "chi tiêu";
             String formattedAmount = formatCurrency(amount);
@@ -288,7 +301,7 @@ public class ChatbotService {
     private String deleteTransaction(Long id) {
         try {
             if (transactionRepository.existsById(id)) {
-                transactionRepository.deleteById(id);
+                transactionService.deleteTransaction(id);
                 return "✅ Đã xóa giao dịch ID **" + id + "** thành công!";
             } else {
                 return "❌ Không tìm thấy giao dịch ID " + id + ".";
@@ -388,11 +401,24 @@ public class ChatbotService {
                         }
                     }
                     
-                    Account selectedAccount = accounts.get(0); // Fallback
+                    Account selectedAccount = null;
                     for (Account a : accounts) {
                         if (a.getAccountName() != null && a.getAccountName().equalsIgnoreCase(accountName)) {
                             selectedAccount = a;
                             break;
+                        }
+                    }
+                    
+                    // If not found, selectedAccount remains null (Unknown state)
+                    if (selectedAccount == null) {
+                        // We check if "Unknown" account exists if user really wants a named account, 
+                        // but per request "unknown là trạng thái", we will let it be null.
+                        // However, many users might have created an account named "Unknown" manually.
+                        for (Account a : accounts) {
+                            if (a.getAccountName() != null && a.getAccountName().equalsIgnoreCase("Unknown")) {
+                                selectedAccount = a;
+                                break;
+                            }
                         }
                     }
 
@@ -403,8 +429,14 @@ public class ChatbotService {
                     t.setTransactionDate(LocalDateTime.now());
                     t.setAccount(selectedAccount);
                     t.setCategory(selectedCategory);
-                    transactionRepository.save(t);
-                    return aiResponse.replaceAll("\\[.*?\\]", "").trim() + " (Hệ thống đã ghi nhận giao dịch!)";
+                    t.setUser(userRepository.findById(userId).orElse(null));
+                    transactionService.createTransaction(t);
+                    
+                    String finalText = aiResponse.replaceAll("\\[.*?\\]", "").trim() + " (Hệ thống đã ghi nhận giao dịch!)";
+                    if (selectedCategory.getName().equalsIgnoreCase("Others") || selectedAccount == null) {
+                        finalText += "\n⚠️ Lưu ý: Tài khoản hoặc Danh mục chưa rõ, hãy cập nhật lại ở trang danh sách giao dịch.";
+                    }
+                    return finalText;
                 }
             } catch (Exception e) {
                 return aiResponse.replaceAll("\\[.*?\\]", "").trim() + " (Lỗi xử lý AI: " + e.getMessage() + ")";
@@ -416,10 +448,70 @@ public class ChatbotService {
         if (delMatcher.find()) {
             try {
                 Long id = Long.parseLong(delMatcher.group(1));
-                transactionRepository.deleteById(id);
+                transactionService.deleteTransaction(id);
                 return aiResponse.replaceAll("\\[.*?\\]", "").trim() + " (Đã xóa giao dịch ID " + id + ".)";
             } catch (Exception e) {
                 return aiResponse.replaceAll("\\[.*?\\]", "").trim() + " (Không tìm thấy giao dịch để xóa.)";
+            }
+        }
+        
+        Pattern editPattern = Pattern.compile("\\[EDIT_TRX:(\\d+):(\\d+):(\\w+):([^:]+):([^:]+):(.+?)\\]");
+        Matcher editMatcher = editPattern.matcher(aiResponse);
+        if (editMatcher.find()) {
+            try {
+                Long id = Long.parseLong(editMatcher.group(1));
+                BigDecimal amount = new BigDecimal(editMatcher.group(2));
+                TransactionType type = TransactionType.valueOf(editMatcher.group(3));
+                String categoryName = editMatcher.group(4).trim();
+                String accountName = editMatcher.group(5).trim();
+                String note = editMatcher.group(6).trim();
+                
+                List<Account> accounts = accountRepository.findByUser_UserId(userId);
+                List<Category> allCategories = categoryRepository.findByUser_UserIdOrUserIsNull(userId);
+                
+                Category selectedCategory = null;
+                for (Category c : allCategories) {
+                    if (c.getType() == type && c.getName() != null && c.getName().equalsIgnoreCase(categoryName)) {
+                        selectedCategory = c;
+                        break;
+                    }
+                }
+                if (selectedCategory == null) {
+                    selectedCategory = allCategories.stream().filter(c -> c.getType() == type).findFirst().orElse(null);
+                }
+                
+                Account selectedAccount = null;
+                for (Account a : accounts) {
+                    if (a.getAccountName() != null && a.getAccountName().equalsIgnoreCase(accountName)) {
+                        selectedAccount = a;
+                        break;
+                    }
+                }
+                // If not found, selectedAccount remains null
+                    if (selectedAccount == null) {
+                        for (Account a : accounts) {
+                            if (a.getAccountName() != null && a.getAccountName().equalsIgnoreCase("Unknown")) {
+                                selectedAccount = a;
+                                break;
+                            }
+                        }
+                    }
+                
+                Transaction newDetails = new Transaction();
+                newDetails.setAmount(amount);
+                newDetails.setType(type);
+                newDetails.setNote(note);
+                newDetails.setAccount(selectedAccount);
+                newDetails.setCategory(selectedCategory);
+                transactionService.updateTransaction(id, newDetails);
+                
+                String finalText = aiResponse.replaceAll("\\[.*?\\]", "").trim() + " (Đã cập nhật giao dịch ID " + id + ".)";
+                if (selectedCategory.getName().equalsIgnoreCase("Others") || selectedAccount == null) {
+                    finalText += "\n⚠️ Lưu ý: Tài khoản hoặc Danh mục mới chưa rõ, bạn nên kiểm tra lại sau.";
+                }
+                return finalText;
+            } catch (Exception e) {
+                return aiResponse.replaceAll("\\[.*?\\]", "").trim() + " (Không thành công khi sửa giao dịch: " + e.getMessage() + ")";
             }
         }
 

@@ -17,12 +17,12 @@ export default function SpendingTrendChart({ transactions = [] }) {
   const displayData = chartData.slice(Math.max(0, currentMonth - 5), currentMonth + 1);
 
   return (
-    <div className="bg-white p-10 rounded-[48px] border border-slate-50 shadow-sm flex-1 animate-in fade-in duration-700">
-      <div className="flex items-center justify-between mb-8">
-        <h3 className="text-2xl font-black text-slate-800 tracking-tighter">Spending Trend</h3>
-        <span className="text-[10px] font-black text-slate-400 bg-slate-50 px-4 py-2 rounded-xl uppercase tracking-widest border border-slate-100">Dynamic Trend</span>
+    <div className="bg-white px-6 py-5 rounded-2xl border border-slate-100 shadow-sm flex-1 animate-in fade-in duration-700">
+      <div className="flex items-center justify-between mb-6">
+        <h3 className="text-xl font-bold text-slate-800 tracking-tight">Spending Trend</h3>
+        <span className="text-[10px] font-bold text-slate-400 bg-slate-50 px-3 py-1.5 rounded-lg uppercase tracking-widest border border-slate-100">Trend Analysis</span>
       </div>
-      <div className="h-80 mt-4">
+      <div className="h-60 mt-4">
         <ResponsiveContainer width="100%" height="100%">
           <AreaChart data={displayData}>
             <defs>

@@ -35,7 +35,7 @@ const DashboardLayout = () => {
           toggleMobileMenu={() => setIsMobileMenuOpen(!isMobileMenuOpen)} 
         />
         
-        <main className="flex-1 overflow-x-hidden overflow-y-auto p-4 md:p-8 lg:p-12 scroll-smooth">
+        <main className="flex-1 overflow-x-hidden overflow-y-auto p-4 md:p-5 lg:p-6 scroll-smooth">
           <div className="max-w-[1600px] mx-auto">
             <Outlet />
           </div>

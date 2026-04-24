@@ -64,6 +64,7 @@ const Profile = () => {
             });
             localStorage.setItem('fullName', res.data.fullName);
             localStorage.setItem('avatarUrl', res.data.avatarUrl || '');
+            window.dispatchEvent(new CustomEvent('profileRefresh'));
             toast.success('Profile updated successfully!');
             // Refresh parent state or just redirect
         } catch (err) {
@@ -74,7 +75,7 @@ const Profile = () => {
     if (loading) return <div className="p-20 text-center font-black animate-pulse text-orange-600 uppercase tracking-widest text-xl">Loading Profile...</div>;
 
     return (
-        <div className="max-w-4xl mx-auto space-y-12 animate-in fade-in duration-700">
+        <div className="max-w-4xl mx-auto space-y-6 animate-in fade-in duration-700">
             <div className="flex items-center gap-4">
                 <button 
                     onClick={() => navigate(-1)}
@@ -85,10 +86,10 @@ const Profile = () => {
                 <h2 className="text-4xl font-black text-slate-900 tracking-tighter">My Profile</h2>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 {/* Left: Avatar Upload */}
                 <div className="lg:col-span-1 space-y-6">
-                    <div className="bg-white p-8 rounded-[48px] border border-slate-100 shadow-sm text-center space-y-6">
+                    <div className="bg-white p-6 rounded-[32px] border border-slate-100 shadow-sm text-center space-y-6">
                         <div className="relative inline-block group">
                             <div className="w-40 h-40 rounded-[40px] overflow-hidden border-4 border-slate-50 shadow-inner bg-slate-50 flex items-center justify-center">
                                 {formData.avatarUrl ? (
@@ -120,7 +121,7 @@ const Profile = () => {
 
                 {/* Right: Form */}
                 <div className="lg:col-span-2">
-                    <form onSubmit={handleSubmit} className="bg-white p-12 rounded-[56px] border border-slate-100 shadow-sm space-y-10">
+                    <form onSubmit={handleSubmit} className="bg-white p-6 md:p-8 rounded-[40px] border border-slate-100 shadow-sm space-y-6">
                         <div className="grid grid-cols-1 gap-8">
                             <div className="space-y-4">
                                 <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] ml-2 flex items-center gap-2">
@@ -132,7 +133,7 @@ const Profile = () => {
                                     onChange={e => setFormData({ ...formData, fullName: e.target.value })}
                                     required
                                     placeholder="Enter your full name" 
-                                    className="w-full bg-slate-50 border-none rounded-[32px] px-10 py-6 font-black text-slate-900 focus:ring-2 focus:ring-orange-500/20 text-xl transition-all" 
+                                    className="w-full bg-slate-50 border-none rounded-[24px] px-8 py-4 font-black text-slate-900 focus:ring-2 focus:ring-orange-500/20 text-lg transition-all" 
                                 />
                             </div>
 
@@ -144,7 +145,7 @@ const Profile = () => {
                                     type="email" 
                                     value={formData.email} 
                                     disabled
-                                    className="w-full bg-slate-50/50 border-none rounded-[32px] px-10 py-6 font-black text-slate-400 cursor-not-allowed text-xl" 
+                                    className="w-full bg-slate-50 border-none rounded-[24px] px-8 py-4 font-black text-slate-900 focus:ring-2 focus:ring-orange-500/20 text-lg transition-all" 
                                 />
                                 <p className="text-[10px] font-bold text-slate-300 ml-4 italic px-2 py-1 bg-slate-50 rounded-lg inline-block">Contact support to change email</p>
                             </div>
@@ -153,7 +154,7 @@ const Profile = () => {
                         <div className="pt-4 flex gap-4">
                             <button 
                                 type="submit" 
-                                className="flex-1 bg-slate-900 text-white font-black py-7 rounded-[32px] shadow-2xl shadow-slate-900/40 hover:scale-[1.02] active:scale-95 transition-all text-xl flex items-center justify-center gap-4"
+                                className="flex-1 bg-slate-900 text-white font-black py-5 rounded-2xl shadow-2xl shadow-slate-900/40 hover:scale-[1.02] active:scale-95 transition-all text-lg flex items-center justify-center gap-4"
                             >
                                 <Save size={24} />
                                 Update Profile
