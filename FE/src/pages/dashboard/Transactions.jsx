@@ -25,9 +25,11 @@ import {
 } from 'lucide-react';
 import { MOCK_DATA } from '../../utils/mockData';
 
-const TRX_API = 'http://localhost:8080/api/transactions';
-const ACC_API = 'http://localhost:8080/api/accounts';
-const CAT_API = 'http://localhost:8080/api/categories';
+import { API_BASE_URL } from '../../utils/api';
+
+const TRX_API = `${API_BASE_URL}/api/transactions`;
+const ACC_API = `${API_BASE_URL}/api/accounts`;
+const CAT_API = `${API_BASE_URL}/api/categories`;
 
 export default function Transactions() {
   const [transactions, setTransactions] = useState([]);

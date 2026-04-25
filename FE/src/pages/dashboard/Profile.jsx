@@ -3,6 +3,8 @@ import axios from 'axios';
 import toast from 'react-hot-toast';
 import { User, Mail, Camera, Save, ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { API_BASE_URL } from '../../utils/api';
+
 
 const Profile = () => {
     const navigate = useNavigate();
@@ -19,7 +21,7 @@ const Profile = () => {
     useEffect(() => {
         const fetchUser = async () => {
             try {
-                const res = await axios.get(`http://localhost:8080/api/users/${userId}`);
+                const res = await axios.get(`${API_BASE_URL}/api/users/${userId}`);
                 setFormData({
                     fullName: res.data.fullName || '',
                     email: res.data.email || '',
@@ -43,7 +45,7 @@ const Profile = () => {
 
         setIsUploading(true);
         try {
-            const res = await axios.post('http://localhost:8080/api/files/upload', formDataFile, {
+            const res = await axios.post(`${API_BASE_URL}/api/files/upload`, formDataFile, {
                 headers: { 'Content-Type': 'multipart/form-data' }
             });
             setFormData(prev => ({ ...prev, avatarUrl: res.data.url }));
@@ -58,7 +60,7 @@ const Profile = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
-            const res = await axios.put(`http://localhost:8080/api/users/${userId}`, {
+            const res = await axios.put(`${API_BASE_URL}/api/users/${userId}`, {
                 fullName: formData.fullName,
                 avatarUrl: formData.avatarUrl
             });

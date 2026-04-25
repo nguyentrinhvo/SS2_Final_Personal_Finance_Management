@@ -28,9 +28,11 @@ import {
 } from 'lucide-react';
 import { MOCK_DATA } from '../../utils/mockData';
 
-const CAT_API = 'http://localhost:8080/api/categories';
-const TRX_API = 'http://localhost:8080/api/transactions';
-const BDG_API = 'http://localhost:8080/api/budgets';
+import { API_BASE_URL } from '../../utils/api';
+
+const CAT_API = `${API_BASE_URL}/api/categories`;
+const TRX_API = `${API_BASE_URL}/api/transactions`;
+const BDG_API = `${API_BASE_URL}/api/budgets`;
 
 export default function Categories() {
   const [categories, setCategories] = useState([]);
@@ -82,7 +84,7 @@ export default function Categories() {
     const loadingToast = toast.loading('Uploading image...');
 
     try {
-      const res = await axios.post('http://localhost:8080/api/files/upload', uploadData, {
+      const res = await axios.post(`${API_BASE_URL}/api/files/upload`, uploadData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
       setFormData(prev => ({ ...prev, imageUrl: res.data.url }));

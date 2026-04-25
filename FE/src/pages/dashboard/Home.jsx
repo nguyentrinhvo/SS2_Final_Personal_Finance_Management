@@ -23,10 +23,12 @@ import ActiveGoals from '../../components/dashboard/ActiveGoals';
 import TransactionTable from '../../components/dashboard/TransactionTable';
 import { MOCK_DATA } from '../../utils/mockData';
 
-const API_ACCOUNTS = 'http://localhost:8080/api/accounts/user';
-const API_TRANSACTIONS = 'http://localhost:8080/api/transactions/user';
-const API_GOALS = 'http://localhost:8080/api/goals/user';
-const API_BUDGETS = 'http://localhost:8080/api/budgets/user';
+import { API_BASE_URL } from '../../utils/api';
+
+const API_ACCOUNTS = `${API_BASE_URL}/api/accounts/user`;
+const API_TRANSACTIONS = `${API_BASE_URL}/api/transactions/user`;
+const API_GOALS = `${API_BASE_URL}/api/goals/user`;
+const API_BUDGETS = `${API_BASE_URL}/api/budgets/user`;
 
 const Home = () => {
   const [data, setData] = useState({

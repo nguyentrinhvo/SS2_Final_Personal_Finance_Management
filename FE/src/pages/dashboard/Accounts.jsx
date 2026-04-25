@@ -21,8 +21,10 @@ import {
 } from 'lucide-react';
 import { MOCK_DATA } from '../../utils/mockData';
 
-const API_BASE_URL = 'http://localhost:8080/api/accounts';
-const TRX_API_URL = 'http://localhost:8080/api/transactions';
+import { API_BASE_URL as BASE } from '../../utils/api';
+
+const API_BASE_URL = `${BASE}/api/accounts`;
+const TRX_API_URL = `${BASE}/api/transactions`;
 
 export default function Accounts() {
   const [accounts, setAccounts] = useState([]);
@@ -100,7 +102,7 @@ export default function Accounts() {
     const loadingToast = toast.loading('Uploading image...');
 
     try {
-      const res = await axios.post('http://localhost:8080/api/files/upload', uploadData, {
+      const res = await axios.post(`${BASE}/api/files/upload`, uploadData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
       setFormData(prev => ({ ...prev, imageUrl: res.data.url }));

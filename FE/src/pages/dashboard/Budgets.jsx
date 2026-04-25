@@ -4,9 +4,11 @@ import toast from 'react-hot-toast';
 import { Plus, Trash2, Edit, TrendingUp, AlertCircle, X, Check, Wallet, PieChart, MoreHorizontal, UploadCloud } from 'lucide-react';
 import { MOCK_DATA } from '../../utils/mockData';
 
-const API_BUDGETS = 'http://localhost:8080/api/budgets';
-const API_CATEGORIES = 'http://localhost:8080/api/categories/user';
-const API_TRANSACTIONS = 'http://localhost:8080/api/transactions/user';
+import { API_BASE_URL } from '../../utils/api';
+
+const API_BUDGETS = `${API_BASE_URL}/api/budgets`;
+const API_CATEGORIES = `${API_BASE_URL}/api/categories/user`;
+const API_TRANSACTIONS = `${API_BASE_URL}/api/transactions/user`;
 
 export default function Budgets() {
   const [budgets, setBudgets] = useState([]);
@@ -79,7 +81,7 @@ export default function Budgets() {
     const loadingToast = toast.loading('Uploading image...');
 
     try {
-      const res = await axios.post('http://localhost:8080/api/files/upload', uploadData, {
+      const res = await axios.post(`${API_BASE_URL}/api/files/upload`, uploadData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
       setFormData(prev => ({ ...prev, imageUrl: res.data.url }));

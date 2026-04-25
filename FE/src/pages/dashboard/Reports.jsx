@@ -35,8 +35,10 @@ const formatCompactNumber = (number) => {
     return isNegative ? '-' + formatted : formatted;
 }
 
-const CAT_API = 'http://localhost:8080/api/categories';
-const TRX_API = 'http://localhost:8080/api/transactions';
+import { API_BASE_URL } from '../../utils/api';
+
+const CAT_API = `${API_BASE_URL}/api/categories`;
+const TRX_API = `${API_BASE_URL}/api/transactions`;
 
 export default function Reports() {
   const [categories, setCategories] = useState([]);

@@ -4,7 +4,9 @@ import toast from 'react-hot-toast';
 import { Target, Plus, X, Trash2, Edit2, TrendingUp, Camera, Wallet, Check, RotateCcw } from 'lucide-react';
 import { MOCK_DATA } from '../../utils/mockData';
 
-const GOAL_API = 'http://localhost:8080/api/goals';
+import { API_BASE_URL } from '../../utils/api';
+
+const GOAL_API = `${API_BASE_URL}/api/goals`;
 
 const Goals = () => {
     const [goals, setGoals] = useState([]);
@@ -46,7 +48,7 @@ const Goals = () => {
         formDataFile.append('file', file);
         setIsUploading(true);
         try {
-            const res = await axios.post('http://localhost:8080/api/files/upload', formDataFile, {
+            const res = await axios.post(`${API_BASE_URL}/api/files/upload`, formDataFile, {
                 headers: { 'Content-Type': 'multipart/form-data' }
             });
             setFormData({ ...formData, imageUrl: res.data.url });

@@ -4,6 +4,7 @@ import { MessageCircle, X, Send, Bot, Sparkles, User, Terminal, Camera, Image, M
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { toast } from 'react-hot-toast';
+import { API_BASE_URL } from '../../utils/api';
 
 export default function FloatingChatbot() {
     const [isOpen, setIsOpen] = useState(false);
@@ -102,7 +103,7 @@ export default function FloatingChatbot() {
                 formData.append('image', selectedImage);
             }
 
-            const res = await axios.post('http://localhost:8080/api/chatbot/ask', formData, {
+            const res = await axios.post(`${API_BASE_URL}/api/chatbot/ask`, formData, {
                 headers: { 'Content-Type': 'multipart/form-data' }
             });
             const responseText = res.data;

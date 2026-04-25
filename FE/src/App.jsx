@@ -15,12 +15,13 @@ import Goals from './pages/dashboard/Goals';
 import Reports from './pages/dashboard/Reports';
 import Profile from './pages/dashboard/Profile';
 import axios from 'axios';
+import { API_BASE_URL } from './utils/api';
 
 function App() {
   const [users, setUsers] = useState([]);
 
   useEffect(() => {
-    axios.get('http://localhost:8080')
+    axios.get(API_BASE_URL)
       .then(response => {
         setUsers(response.data);
       })

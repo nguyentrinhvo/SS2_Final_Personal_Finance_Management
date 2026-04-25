@@ -2,6 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Search, Bell, Menu, X, Trash2, ArrowRight, Check } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { API_BASE_URL } from '../../utils/api';
+
 
 export default function Navbar({ toggleMobileMenu }) {
   const location = useLocation();
@@ -38,9 +40,9 @@ export default function Navbar({ toggleMobileMenu }) {
     const fetchNotifications = async () => {
       try {
         const [budgetsRes, trxsRes, goalsRes] = await Promise.all([
-          axios.get(`http://localhost:8080/api/budgets/user/${userId}/current`),
-          axios.get(`http://localhost:8080/api/transactions/user/${userId}/all`),
-          axios.get(`http://localhost:8080/api/goals/user/${userId}`)
+          axios.get(`${API_BASE_URL}/api/budgets/user/${userId}/current`),
+          axios.get(`${API_BASE_URL}/api/transactions/user/${userId}/all`),
+          axios.get(`${API_BASE_URL}/api/goals/user/${userId}`)
         ]);
         
         const currentMonth = new Date().getMonth();
@@ -168,7 +170,7 @@ export default function Navbar({ toggleMobileMenu }) {
     const timer = setTimeout(async () => {
       setSearchLoading(true);
       try {
-        const res = await fetch(`http://localhost:8080/api/transactions/user/${userId}/all`);
+        const res = await fetch(`${API_BASE_URL}/api/transactions/user/${userId}/all`);
         const data = await res.json();
         const filtered = data.filter(t =>
           t.note?.toLowerCase().includes(searchQuery.toLowerCase()) ||

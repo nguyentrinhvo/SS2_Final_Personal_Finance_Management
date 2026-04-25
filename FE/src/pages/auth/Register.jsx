@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import toast from 'react-hot-toast';
 import { ArrowLeft } from 'lucide-react';
+import { API_BASE_URL } from '../../utils/api';
 
 const Register = () => {
   const [fullname, setFullname] = useState('');
@@ -20,7 +21,7 @@ const Register = () => {
     }
 
     try {
-      const response = await axios.post('http://localhost:8080/api/auth/register', {
+      const response = await axios.post(`${API_BASE_URL}/api/auth/register`, {
         fullName: fullname,
         username,
         email,
