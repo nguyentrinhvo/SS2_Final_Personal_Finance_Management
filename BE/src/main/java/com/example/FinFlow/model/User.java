@@ -20,15 +20,16 @@ public class User {
     private Long userId;
 
     @Column(unique = true, nullable = false)
+    private String username;
+
+    @Column(unique = true, nullable = false)
     private String email;
 
     private String fullName;
 
     @Column(nullable = false)
     @JsonIgnore
-    private String passwordHash;
-
-    private LocalDateTime createdAt = LocalDateTime.now();
+    private String password;
 
     @OneToMany(mappedBy = "user")
     @JsonIgnore
@@ -41,7 +42,7 @@ public class User {
     @OneToMany(mappedBy = "user")
     @JsonIgnore
     private List<Budget> budgets;
-    
+
     @OneToMany(mappedBy = "user")
     @JsonIgnore
     private List<Goal> goals;

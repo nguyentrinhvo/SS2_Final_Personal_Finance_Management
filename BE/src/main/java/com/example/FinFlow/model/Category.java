@@ -27,7 +27,7 @@ public class Category {
     private String imageUrl;
 
     @ManyToOne
-    @JoinColumn(name = "user_id") // Nullable if default category
+    @JoinColumn(name = "user_id")
     @JsonIgnore
     private User user;
 

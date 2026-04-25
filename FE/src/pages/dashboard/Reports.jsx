@@ -227,8 +227,8 @@ export default function Reports() {
              <h3 className="text-[11px] font-black text-slate-800 uppercase tracking-tight">Category Yield</h3>
           </div>
           
-          <div className="flex flex-row items-center justify-center gap-4 py-4 uppercase">
-            <div className="relative size-60 shrink-0">
+          <div className="flex flex-col xl:flex-row items-center justify-center gap-6 py-4 uppercase">
+            <div className="relative size-52 shrink-0">
                 {expenses > 0 ? (
                   <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
@@ -254,12 +254,12 @@ export default function Reports() {
                     {activeIndex !== null ? pieData[activeIndex].name : 'Total Flow'}
                   </span>
                   <span className="text-xl font-black text-slate-900 tracking-tighter leading-none">
-                    {activeIndex !== null ? formatCompactNumber(pieData[activeIndex].value) : formatCompactNumber(expenses)}
+                    {activeIndex !== null ? pieData[activeIndex].value.toLocaleString('vi-VN') : expenses.toLocaleString('vi-VN')}
                   </span>
                 </div>
             </div>
 
-            <div className="flex flex-col gap-1 w-full max-w-[200px]">
+            <div className="flex flex-col gap-1 w-full max-w-[180px]">
                {pieData.length > 0 ? pieData.map((e, idx) => (
                  <div key={idx} className="flex items-center gap-3 py-1.5 px-2 group hover:bg-slate-50 rounded-xl transition-all">
                     <div className="flex items-center gap-2 flex-1">
@@ -294,7 +294,23 @@ export default function Reports() {
                 <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 700, fill: '#94a3b8' }} tickFormatter={formatCompactNumber} width={40} />
                 <Tooltip 
                   cursor={{ fill: '#f8fafc', radius: 4 }}
-                  contentStyle={{ backgroundColor: '#fff', borderRadius: '16px', border: 'none', boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.1)', fontSize: '11px', fontWeight: 'bold' }}
+                  content={({ active, payload, label }) => {
+                    if (active && payload && payload.length) {
+                      return (
+                        <div className="bg-white p-4 rounded-2xl shadow-xl border border-slate-50 flex flex-col gap-2">
+                          <p className="text-[10px] font-black text-slate-400 uppercase tracking-tight mb-1">{label}</p>
+                          {payload.map((entry, index) => (
+                            <div key={index} className="flex items-center gap-3">
+                              <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: entry.fill }}></span>
+                              <span className="text-[11px] font-bold text-slate-500 uppercase">{entry.name}:</span>
+                              <span className="text-[11px] font-black text-slate-900">{entry.value.toLocaleString('vi-VN')} đ</span>
+                            </div>
+                          ))}
+                        </div>
+                      );
+                    }
+                    return null;
+                  }}
                 />
                 <Bar dataKey="inflow" fill="#0369a1" radius={[4, 4, 0, 0]} barSize={12} />
                 <Bar dataKey="outflow" fill="#ea580c" radius={[4, 4, 0, 0]} barSize={12} />

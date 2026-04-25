@@ -83,10 +83,11 @@ const LandingPage = () => {
       }`}>
         <nav className="max-w-7xl mx-auto px-6 md:px-12 flex justify-between items-center">
           <div className="text-2xl font-black tracking-tighter text-slate-900">FinFlow</div>
-          <div className="hidden md:flex items-center space-x-8">
-            <a href="#" className="text-[#a33900] font-semibold">Home</a>
-            <a href="#features" className="text-slate-600 font-medium hover:text-[#a33900] transition-colors">Features</a>
-            <a href="#testimonials" className="text-slate-600 font-medium hover:text-[#a33900] transition-colors">Testimonials</a>
+          <div className="hidden md:flex items-center space-x-12">
+            <a href="#" className="text-[#a33900] font-bold text-xs uppercase tracking-[0.2em]">Home</a>
+            <a href="#features" className="text-slate-400 font-bold text-xs uppercase tracking-[0.2em] hover:text-[#a33900] transition-all">Features</a>
+            <a href="#testimonials" className="text-slate-400 font-bold text-xs uppercase tracking-[0.2em] hover:text-[#a33900] transition-all">Stories</a>
+            <a href="#faq" className="text-slate-400 font-bold text-xs uppercase tracking-[0.2em] hover:text-[#a33900] transition-all">Questions</a>
           </div>
           <div className="flex items-center gap-4">
             <button 
@@ -114,23 +115,26 @@ const LandingPage = () => {
                 <Zap size={14} fill="currentColor" />
                 Next Generation Finance
               </div>
-              <h1 className="text-5xl md:text-7xl font-black leading-[1.1] tracking-tight">
+              <h1 className="text-5xl md:text-6xl font-black leading-[1.1] tracking-tight text-slate-900">
                 Take Control of Your <br/>
                 <span className="text-[#a33900]">Financial Future</span>
               </h1>
-              <p className="text-lg text-slate-600 max-w-lg leading-relaxed">
-                Streamline your personal and business finances with a high-fidelity platform designed for modern professionals. Precision tracking meet effortless agility.
+              <p className="text-lg md:text-xl text-slate-500 leading-relaxed font-medium">
+                Streamline your personal and business finances with a high-fidelity platform. Precision tracking meet effortless agility.
               </p>
-              <div className="flex flex-wrap gap-4">
+              <div className="flex flex-wrap gap-4 pt-2">
                 <button 
                   onClick={() => navigate('/register')}
-                  className="bg-[#a33900] text-white px-8 py-4 rounded-full font-bold text-lg hover:shadow-xl hover:-translate-y-1 transition-all flex items-center gap-2"
+                  className="bg-[#a33900] text-white px-8 py-4 rounded-2xl font-black text-base hover:shadow-xl hover:-translate-y-0.5 transition-all flex items-center gap-2"
                 >
                   Get Started <ArrowRight size={20} />
                 </button>
-                <button className="border-2 border-[#a33900] text-[#a33900] px-8 py-4 rounded-full font-bold text-lg hover:bg-[#a33900]/5 transition-all">
+                <a 
+                  href="#features"
+                  className="border-2 border-orange-100 text-[#a33900] px-8 py-4 rounded-2xl font-black text-base hover:bg-orange-50 transition-all inline-flex items-center"
+                >
                   Explore Features
-                </button>
+                </a>
               </div>
               <div className="pt-8 flex items-center gap-4">
                 <div className="flex -space-x-3">
@@ -142,41 +146,71 @@ const LandingPage = () => {
               </div>
             </div>
 
-            <div className="relative hidden lg:block">
-              <div className="absolute top-0 right-0 w-full h-[450px] bg-gradient-to-br from-[#ffdbce] to-white rounded-[2rem] shadow-2xl border border-white/50 rotate-3 scale-95 opacity-50"></div>
-              <div className="relative bg-white p-8 rounded-[2rem] shadow-2xl border border-slate-100 -rotate-2 transform hover:rotate-0 transition-transform duration-700">
+            <div className="relative hidden lg:block h-[500px]">
+              {/* Background abstract shapes */}
+              <div className="absolute top-0 right-0 w-64 h-64 bg-orange-100 rounded-full blur-[80px] opacity-60"></div>
+
+              {/* Back card 2: Goals */}
+              <div className="absolute top-12 right-0 w-64 bg-white/80 backdrop-blur-md p-5 rounded-[2rem] shadow-xl border border-white/50 rotate-6 scale-90 z-0">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-8 h-8 bg-green-500 rounded-lg flex items-center justify-center text-white">
+                    <Zap size={16} />
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-[9px] font-black text-slate-400 uppercase">Savings</p>
+                    <div className="h-1 w-full bg-slate-100 rounded-full mt-1 overflow-hidden">
+                      <div className="h-full bg-green-500 w-[80%]"></div>
+                    </div>
+                  </div>
+                </div>
+                <p className="text-base font-black text-slate-900">$24,000 / $30k</p>
+              </div>
+
+              {/* Back card 1: Transactions */}
+              <div className="absolute bottom-16 left-0 w-72 bg-white/60 backdrop-blur-md p-5 rounded-[2rem] shadow-xl border border-white/50 -rotate-3 scale-95 z-0">
+                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-3">Activity</p>
+                <div className="space-y-3">
+                  {[1, 2].map(i => (
+                    <div key={i} className="flex items-center gap-3">
+                      <div className="w-6 h-6 bg-slate-100 rounded-md"></div>
+                      <div className="flex-1 h-1.5 bg-slate-100 rounded-full"></div>
+                      <div className="w-10 h-1.5 bg-orange-100 rounded-full"></div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Main Card */}
+              <div className="relative bg-white p-8 rounded-[3rem] shadow-[0_40px_80px_-15px_rgba(0,0,0,0.1)] border border-slate-100 transform hover:scale-[1.01] transition-all duration-700 z-10">
                 <div className="space-y-6">
                   <div className="flex justify-between items-center">
                     <div className="space-y-1">
-                      <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Total Balance</p>
-                      <h2 className="text-3xl font-black">$45,280.50</h2>
+                      <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em]">Net Worth</p>
+                      <h2 className="text-3xl font-black text-slate-900 tracking-tighter">$128,450</h2>
                     </div>
-                    <div className="w-12 h-12 bg-[#a33900] rounded-2xl flex items-center justify-center text-white shadow-lg shadow-[#a33900]/20">
-                      <BarChart3 size={24} />
+                    <div className="w-12 h-12 bg-[#a33900] rounded-2xl flex items-center justify-center text-white shadow-xl shadow-[#a33900]/20">
+                      <PieChart size={24} />
                     </div>
                   </div>
                   
                   <div className="grid grid-cols-2 gap-4">
-                    <div className="bg-[#fff8f6] p-4 rounded-2xl border border-[#fee2d9]">
-                      <p className="text-[10px] font-bold text-slate-400 uppercase">Monthly Income</p>
-                      <p className="text-lg font-black text-green-600">+$8,400</p>
+                    <div className="bg-orange-50/50 p-4 rounded-2xl border border-orange-100/30">
+                      <p className="text-[9px] font-black text-orange-400 uppercase tracking-wider mb-0.5">Inflow</p>
+                      <p className="text-xl font-black text-slate-900">+$12.4k</p>
                     </div>
-                    <div className="bg-[#fff8f6] p-4 rounded-2xl border border-[#fee2d9]">
-                      <p className="text-[10px] font-bold text-slate-400 uppercase">Monthly Spent</p>
-                      <p className="text-lg font-black text-red-500">-$3,120</p>
+                    <div className="bg-slate-50/50 p-4 rounded-2xl border border-slate-100">
+                      <p className="text-[9px] font-black text-slate-400 uppercase tracking-wider mb-0.5">Outflow</p>
+                      <p className="text-xl font-black text-slate-900">-$4.2k</p>
                     </div>
                   </div>
 
                   <div className="space-y-3">
-                    <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Spending Categories</p>
-                    <div className="space-y-2">
-                      <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
-                        <div className="h-full bg-[#a33900] w-[65%]"></div>
-                      </div>
-                      <div className="flex justify-between text-[10px] font-bold text-slate-500">
-                        <span>LIFESTYLE</span>
-                        <span>65%</span>
-                      </div>
+                    <div className="flex justify-between items-end">
+                      <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Yield</p>
+                      <span className="text-xs font-black text-green-600">+12.4%</span>
+                    </div>
+                    <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
+                      <div className="h-full bg-gradient-to-r from-[#a33900] to-orange-400 w-[75%] rounded-full"></div>
                     </div>
                   </div>
                 </div>
@@ -186,11 +220,19 @@ const LandingPage = () => {
         </section>
 
         {/* Features Section */}
-        <section id="features" className="py-24 bg-white">
+        <section id="features" className="py-32 bg-white">
           <div className="max-w-7xl mx-auto px-6 md:px-12">
-            <div className="text-center mb-20 space-y-4">
-              <h2 className="text-4xl md:text-5xl font-black tracking-tight">Powerful Features to Take <br/>Control of Your Finances</h2>
-              <p className="text-slate-600 max-w-2xl mx-auto text-lg">Everything you need to manage assets, track cash flow, and forecast growth in one unified platform.</p>
+            <div className="mb-24">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-orange-50 text-[#a33900] font-bold text-[10px] uppercase tracking-[0.2em] mb-8">
+                <ShieldCheck size={12} />
+                Core Capabilities
+              </div>
+              <h2 className="text-4xl md:text-5xl font-black tracking-tight text-slate-900 leading-tight mb-8">
+                Powerful Features to Take Control of Your Finances
+              </h2>
+              <p className="text-lg md:text-xl text-slate-500 font-medium leading-relaxed">
+                Everything you need to manage assets, track cash flow, and forecast growth in one unified platform.
+              </p>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
               {[
@@ -249,9 +291,16 @@ const LandingPage = () => {
         </section>
 
         {/* FAQ Section */}
-        <section className="py-24 bg-[#fff8f6] px-6 md:px-12">
+        <section id="faq" className="py-32 bg-white px-6 md:px-12 border-t border-slate-50">
           <div className="max-w-3xl mx-auto">
-            <h2 className="text-4xl font-black text-center mb-16">Frequently Asked Questions</h2>
+            <div className="text-center mb-20 space-y-6">
+              <h2 className="text-center text-3xl md:text-4xl font-black tracking-tight text-slate-900 leading-tight">
+                Frequently Asked Questions
+              </h2>
+              <p className="text-center text-slate-500 text-lg font-medium leading-relaxed">
+                Everything you need to know about FinFlow
+              </p>
+            </div>
             <div className="space-y-4">
               {faqs.map((faq, i) => (
                 <div key={i} className="bg-white rounded-3xl border border-[#fee2d9] overflow-hidden transition-all">
@@ -276,13 +325,17 @@ const LandingPage = () => {
         </section>
 
         {/* Final CTA Section */}
-        <section className="py-24 px-6 md:px-12">
-          <div className="max-w-5xl mx-auto bg-[#a33900] rounded-[3rem] p-12 md:p-20 text-center text-white relative overflow-hidden shadow-2xl">
+        <section className="py-32 px-6 md:px-12">
+          <div className="max-w-6xl mx-auto bg-[#a33900] rounded-[3.5rem] p-12 md:p-20 text-center text-white relative overflow-hidden shadow-2xl">
             <div className="absolute top-0 left-0 w-full h-full opacity-10 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]"></div>
-            <div className="relative z-10 space-y-10">
-              <h2 className="text-4xl md:text-6xl font-black leading-[1.2]">Ready to master your <br className="hidden md:block"/>money today?</h2>
-              <p className="text-white/80 text-lg md:text-xl max-w-2xl mx-auto leading-relaxed">Join over 25,000 users who are already taking control of their financial future with FinFlow. Experience the power of precision tracking.</p>
-              <div className="flex flex-wrap justify-center gap-6">
+            <div className="relative z-10 flex flex-col items-center">
+              <h2 className="text-center text-4xl md:text-5xl font-black tracking-tight leading-tight w-full mb-12">
+                Ready to master your money today?
+              </h2>
+              <p className="text-center text-white/80 text-lg md:text-xl max-w-3xl leading-[1.8] font-medium mb-16">
+                Join over 25,000 users who are already taking control of their financial future with FinFlow. Experience the power of precision tracking.
+              </p>
+              <div className="flex flex-wrap justify-center gap-8 mb-12">
                 <button 
                   onClick={() => navigate('/register')}
                   className="bg-white text-[#a33900] px-10 py-5 rounded-full font-black text-xl hover:shadow-2xl hover:scale-105 active:scale-95 transition-all"

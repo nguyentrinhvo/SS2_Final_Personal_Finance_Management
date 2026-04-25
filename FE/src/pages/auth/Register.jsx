@@ -6,6 +6,7 @@ import { ArrowLeft } from 'lucide-react';
 
 const Register = () => {
   const [fullname, setFullname] = useState('');
+  const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -21,6 +22,7 @@ const Register = () => {
     try {
       const response = await axios.post('http://localhost:8080/api/auth/register', {
         fullName: fullname,
+        username,
         email,
         password
       });
@@ -49,14 +51,11 @@ const Register = () => {
 
         <div className="text-center pt-4">
           <div className="inline-flex p-4 bg-orange-50 rounded-2xl text-[#a33900] mb-4">
-            <span className="text-2xl font-black">F.</span>
+            <span className="text-2xl font-black">FinFlow</span>
           </div>
           <h2 className="text-3xl font-black text-slate-900 tracking-tight">
-            Join FinFlow
+            Register
           </h2>
-          <p className="mt-2 text-sm text-slate-500 font-bold uppercase tracking-widest opacity-60">
-            Start Your Financial Journey
-          </p>
         </div>
 
         <form className="mt-8 space-y-5" onSubmit={handleRegister}>
@@ -73,7 +72,18 @@ const Register = () => {
               />
             </div>
             <div className="space-y-1.5">
-              <label htmlFor="email-address" className="block text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Email Address</label>
+              <label htmlFor="username" className="block text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Username</label>
+              <input
+                id="username"
+                type="text" required
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                className="w-full px-6 py-4 bg-slate-50 border-none rounded-2xl text-slate-900 font-bold focus:ring-4 focus:ring-orange-500/10 transition-all placeholder:text-slate-200"
+                placeholder="johndoe123"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <label htmlFor="email-address" className="block text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Recovery Email</label>
               <input
                 id="email-address"
                 type="email" required
@@ -112,7 +122,7 @@ const Register = () => {
               type="submit"
               className="w-full flex justify-center py-4 px-4 bg-[#a33900] hover:bg-[#c04a00] text-white text-sm font-black rounded-2xl transition-all active:scale-[0.98] shadow-xl shadow-orange-900/10 uppercase tracking-[0.2em]"
             >
-              Initialize Account
+              Register
             </button>
           </div>
         </form>
@@ -120,13 +130,13 @@ const Register = () => {
         <div className="text-center flex flex-col gap-6">
           <div className="flex items-center gap-4">
             <div className="h-[1px] flex-1 bg-slate-100"></div>
-            <span className="text-[10px] text-slate-300 font-black uppercase tracking-widest">Already a Member?</span>
+            <span className="text-[10px] text-slate-300 font-black uppercase tracking-widest">or</span>
             <div className="h-[1px] flex-1 bg-slate-100"></div>
           </div>
 
           <p className="text-sm text-slate-500 font-bold uppercase tracking-tight">
             <Link to="/login" className="text-[#a33900] hover:text-[#c04a00] transition-colors border-b-2 border-orange-100 pb-0.5">
-              Login to Session
+              Login
             </Link>
           </p>
         </div>

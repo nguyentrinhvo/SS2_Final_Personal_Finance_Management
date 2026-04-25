@@ -5,7 +5,7 @@ import toast from 'react-hot-toast';
 import { ArrowLeft } from 'lucide-react';
 
 const Login = () => {
-  const [email, setEmail] = useState('');
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const navigate = useNavigate();
 
@@ -13,18 +13,18 @@ const Login = () => {
     e.preventDefault();
     try {
       const response = await axios.post('http://localhost:8080/api/auth/login', {
-        email,
+        username,
         password
       });
       localStorage.setItem('userId', response.data.userId);
       localStorage.setItem('fullName', response.data.fullName);
-      localStorage.setItem('email', email);
+      localStorage.setItem('email', response.data.email);
       localStorage.setItem('avatarUrl', response.data.avatarUrl || '');
       localStorage.setItem('isDemoMode', 'false');
       toast.success('Login successful!');
       navigate('/dashboard');
     } catch (error) {
-      toast.error(error.response?.data?.error || 'Invalid email or password');
+      toast.error(error.response?.data?.error || 'Invalid username or password');
     }
   };
 
@@ -45,29 +45,26 @@ const Login = () => {
 
         <div className="text-center pt-4">
           <div className="inline-flex p-4 bg-orange-50 rounded-2xl text-[#a33900] mb-4">
-            <span className="text-2xl font-black">F.</span>
+            <span className="text-2xl font-black">FinFlow</span>
           </div>
           <h2 className="text-3xl font-black text-slate-900 tracking-tight">
-            Welcome Back
+            Login
           </h2>
-          <p className="mt-2 text-sm text-slate-500 font-bold uppercase tracking-widest opacity-60">
-            Secure Protocol Access
-          </p>
         </div>
         
         <form className="mt-8 space-y-5" onSubmit={handleLogin}>
           <div className="space-y-4">
             <div className="space-y-2">
-              <label htmlFor="email-address" className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-1">Email Address</label>
+              <label htmlFor="username" className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-1">Username</label>
               <input
-                id="email-address"
-                name="email"
-                type="email"
+                id="username"
+                name="username"
+                type="text"
                 required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
                 className="w-full px-6 py-4 bg-slate-50 border-none rounded-2xl text-slate-900 font-bold focus:ring-4 focus:ring-orange-500/10 transition-all placeholder:text-slate-200"
-                placeholder="name@company.com"
+                placeholder="Your username"
               />
             </div>
             <div className="space-y-2">
@@ -82,6 +79,15 @@ const Login = () => {
                 className="w-full px-6 py-4 bg-slate-50 border-none rounded-2xl text-slate-900 font-bold focus:ring-4 focus:ring-orange-500/10 transition-all placeholder:text-slate-200"
                 placeholder="••••••••"
               />
+              <div className="flex justify-end pr-1">
+                <button 
+                  type="button"
+                  onClick={() => navigate('/forgot-password')}
+                  className="text-[10px] font-black text-[#a33900] uppercase tracking-widest hover:underline opacity-80 hover:opacity-100"
+                >
+                  Forgot Password?
+                </button>
+              </div>
             </div>
           </div>
 
@@ -90,7 +96,7 @@ const Login = () => {
               type="submit"
               className="w-full flex justify-center py-4 px-4 bg-[#a33900] hover:bg-[#c04a00] text-white text-sm font-black rounded-2xl transition-all active:scale-[0.98] shadow-xl shadow-orange-900/10 uppercase tracking-[0.2em]"
             >
-              Initialize Login
+              Login
             </button>
           </div>
         </form>
@@ -98,14 +104,14 @@ const Login = () => {
         <div className="text-center flex flex-col gap-6">
           <div className="flex items-center gap-4">
             <div className="h-[1px] flex-1 bg-slate-100"></div>
-            <span className="text-[10px] text-slate-300 font-black uppercase tracking-widest">Verification</span>
+            <span className="text-[10px] text-slate-300 font-black uppercase tracking-widest">or</span>
             <div className="h-[1px] flex-1 bg-slate-100"></div>
           </div>
 
           <p className="text-sm text-slate-500 font-bold uppercase tracking-tight">
             New here?{' '}
             <Link to="/register" className="text-[#a33900] hover:text-[#c04a00] transition-colors border-b-2 border-orange-100 pb-0.5">
-              Create Account
+              Register
             </Link>
           </p>
         </div>
