@@ -26,7 +26,7 @@ public class CategoryService {
     public void seedCategories() {
         if (categoryRepository.count() == 0) {
             List<Category> defaultCategories = Arrays.asList(
-                    new Category(null, "Fooad", TransactionType.EXPENSE, null, null, null),
+                    new Category(null, "Food", TransactionType.EXPENSE, null, null, null),
                     new Category(null, "Transport", TransactionType.EXPENSE, null, null, null),
                     new Category(null, "Rent", TransactionType.EXPENSE, null, null, null),
                     new Category(null, "Shopping", TransactionType.EXPENSE, null, null, null),

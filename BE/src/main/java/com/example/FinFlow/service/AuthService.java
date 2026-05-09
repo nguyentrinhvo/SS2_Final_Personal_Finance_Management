@@ -40,30 +40,7 @@ public class AuthService {
         user.setFullName(fullName);
         user.setPassword(passwordEncoder.encode(password));
         User savedUser = userRepository.save(user);
-        initializeCategories(savedUser);
         return savedUser;
-    }
-
-    private void initializeCategories(User user) {
-        List<Category> coreCategories = new ArrayList<>();
-
-        // Expense Categories
-        coreCategories.add(createCategory("Food", TransactionType.EXPENSE, user));
-        coreCategories.add(createCategory("Shopping", TransactionType.EXPENSE, user));
-        coreCategories.add(createCategory("Transportation", TransactionType.EXPENSE, user));
-
-        // Income Categories
-        coreCategories.add(createCategory("Salary", TransactionType.INCOME, user));
-
-        categoryRepository.saveAll(coreCategories);
-    }
-
-    private Category createCategory(String name, TransactionType type, User user) {
-        Category category = new Category();
-        category.setName(name);
-        category.setType(type);
-        category.setUser(user);
-        return category;
     }
 
     public Optional<User> login(String loginId, String password) {
