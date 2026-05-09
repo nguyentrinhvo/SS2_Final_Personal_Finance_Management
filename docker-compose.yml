@@ -1,51 +1,8 @@
 services:
-  pd:
-    image: pingcap/pd:latest
-    container_name: tidb-pd
-    ports:
-      - "2379:2379"
-    command:
-      - --name=pd
-      - --client-urls=http://0.0.0.0:2379
-      - --advertise-client-urls=http://pd:2379
-      - --data-dir=/data/pd
-      - --initial-cluster=pd=http://pd:2380
-    volumes:
-      - pd_data:/data/pd
-    restart: always
-
-  tikv:
-    image: pingcap/tikv:latest
-    container_name: tidb-tikv
-    command:
-      - --addr=0.0.0.0:20160
-      - --advertise-addr=tikv:20160
-      - --data-dir=/data/tikv
-      - --pd=pd:2379
-    volumes:
-      - tikv_data:/data/tikv
-    depends_on:
-      - pd
-    restart: always
-
-  tidb:
-    image: pingcap/tidb:latest
-    container_name: tidb-server
-    ports:
-      - "4000:4000"
-    command:
-      - --store=tikv
-      - --path=pd:2379
-    depends_on:
-      - tikv
-    restart: always
-
   backend:
     build: ./BE
     container_name: finflow-backend
     restart: always
-    depends_on:
-      - tidb
     environment:
       - SPRING_DATASOURCE_URL=${SPRING_DATASOURCE_URL}
       - SPRING_DATASOURCE_USERNAME=${SPRING_DATASOURCE_USERNAME}
@@ -58,17 +15,13 @@ services:
       - "8080:8080"
 
   frontend:
-    build: 
+    build:
       context: ./FE
       args:
-        - VITE_API_BASE_URL=http://localhost:8080
+        - VITE_API_BASE_URL=https://api.fifl.me
     container_name: finflow-frontend
     restart: always
     ports:
-      - "80:80"
+      - "3000:80"
     depends_on:
       - backend
-
-volumes:
-  pd_data:
-  tikv_data:
