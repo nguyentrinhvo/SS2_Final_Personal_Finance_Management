@@ -27,7 +27,7 @@ export default function ActiveGoals({ goals = [] }) {
               <div className="flex justify-between items-center mb-1">
                 <div className="flex items-center gap-3">
                    <div className="size-2.5 bg-orange-600 rounded-full group-hover:scale-150 transition-transform shadow-[0_0_10px_rgba(234,88,12,0.5)]"></div>
-                   <span className="font-black text-slate-800 text-lg tracking-tight group-hover:text-orange-600 transition-colors uppercase truncate max-w-[150px]">{goal.name}</span>
+                   <span className="font-black text-slate-800 text-lg tracking-tight group-hover:text-orange-600 transition-colors uppercase break-words whitespace-normal">{goal.name}</span>
                 </div>
                 <span className="text-[11px] font-black text-slate-400 uppercase tracking-widest">{Math.round(progress)}%</span>
               </div>

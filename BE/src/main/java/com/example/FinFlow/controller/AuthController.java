@@ -62,4 +62,14 @@ public class AuthController {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }
     }
+
+    @DeleteMapping("/delete/{id}")
+    public ResponseEntity<?> deleteAccount(@PathVariable Long id) {
+        try {
+            authService.deleteAccount(id);
+            return ResponseEntity.ok(Map.of("message", "Account deleted successfully"));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
 }

@@ -218,7 +218,7 @@ const Goals = () => {
                                     )}
                                     <div className="space-y-0.5">
                                         <div className="flex items-center gap-2">
-                                            <h3 className="text-lg font-bold text-slate-900 tracking-tight leading-none truncate max-w-[120px]">{goal.name}</h3>
+                                            <h3 className="text-lg font-bold text-slate-900 tracking-tight leading-none break-words whitespace-normal">{goal.name}</h3>
                                             {isComplete && <Check size={14} className="text-green-500" />}
                                         </div>
                                         <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">{goal.category}</p>

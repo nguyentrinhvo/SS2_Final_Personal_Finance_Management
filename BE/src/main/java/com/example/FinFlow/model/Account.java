@@ -38,7 +38,7 @@ public class Account {
     @JsonIgnore
     private User user;
 
-    @OneToMany(mappedBy = "account")
+    @OneToMany(mappedBy = "account", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnore
     private List<Transaction> transactions;
 

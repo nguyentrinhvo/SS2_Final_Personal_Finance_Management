@@ -153,13 +153,31 @@ const Profile = () => {
                             </div>
                         </div>
 
-                        <div className="pt-4 flex gap-4">
+                        <div className="pt-4 flex flex-col gap-4">
                             <button 
                                 type="submit" 
-                                className="flex-1 bg-slate-900 text-white font-black py-5 rounded-2xl shadow-2xl shadow-slate-900/40 hover:scale-[1.02] active:scale-95 transition-all text-lg flex items-center justify-center gap-4"
+                                className="w-full bg-slate-900 text-white font-black py-5 rounded-2xl shadow-2xl shadow-slate-900/40 hover:scale-[1.02] active:scale-95 transition-all text-lg flex items-center justify-center gap-4"
                             >
                                 <Save size={24} />
                                 Update Profile
+                            </button>
+                            <button 
+                                type="button" 
+                                onClick={async () => {
+                                    if(window.confirm('Are you sure you want to delete your account? This action cannot be undone.')){
+                                        try {
+                                            await axios.delete(`${API_BASE_URL}/api/auth/delete/${userId}`);
+                                            toast.success('Account deleted successfully');
+                                            localStorage.clear();
+                                            window.location.href = '/';
+                                        } catch(err) {
+                                            toast.error('Failed to delete account');
+                                        }
+                                    }
+                                }}
+                                className="w-full bg-red-50 text-red-600 font-black py-4 rounded-2xl hover:bg-red-600 hover:text-white transition-all text-sm uppercase tracking-widest flex items-center justify-center gap-2"
+                            >
+                                Delete Account
                             </button>
                         </div>
                     </form>

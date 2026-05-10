@@ -35,6 +35,15 @@ public class CategoryService {
                     new Category(null, "Business", TransactionType.INCOME, null, null, null),
                     new Category(null, "Gift", TransactionType.INCOME, null, null, null));
             categoryRepository.saveAll(defaultCategories);
+        } else {
+            // Fix typo in database if it exists
+            List<Category> allCategories = categoryRepository.findAll();
+            for (Category c : allCategories) {
+                if ("Fooad".equals(c.getName()) && c.getUser() == null) {
+                    c.setName("Food");
+                    categoryRepository.save(c);
+                }
+            }
         }
     }
 

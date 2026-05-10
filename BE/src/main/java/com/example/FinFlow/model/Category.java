@@ -31,7 +31,7 @@ public class Category {
     @JsonIgnore
     private User user;
 
-    @OneToMany(mappedBy = "category")
+    @OneToMany(mappedBy = "category", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnore
     private List<Transaction> transactions;
 }
