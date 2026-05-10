@@ -206,25 +206,25 @@ const Goals = () => {
                     return (
                         <div key={goal.goalId} className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-all duration-300 group h-fit relative">
                             <div className="flex justify-between items-start mb-4">
-                                <div className="flex items-center gap-3">
+                                <div className="flex items-center gap-3 flex-1 min-w-0">
                                     {goal.imageUrl ? (
-                                        <div className="size-11 rounded-xl overflow-hidden shadow-sm border border-slate-100">
+                                        <div className="size-11 rounded-xl overflow-hidden shadow-sm border border-slate-100 shrink-0">
                                             <img src={goal.imageUrl} alt={goal.name} className="w-full h-full object-cover" />
                                         </div>
                                     ) : (
-                                        <div className="size-11 rounded-xl bg-slate-50 flex items-center justify-center text-slate-300 border border-slate-100">
+                                        <div className="size-11 rounded-xl bg-slate-50 flex items-center justify-center text-slate-300 border border-slate-100 shrink-0">
                                             <Target size={18} />
                                         </div>
                                     )}
-                                    <div className="space-y-0.5">
-                                        <div className="flex items-center gap-2">
-                                            <h3 className="text-lg font-bold text-slate-900 tracking-tight leading-none break-words whitespace-normal">{goal.name}</h3>
-                                            {isComplete && <Check size={14} className="text-green-500" />}
+                                    <div className="space-y-0.5 flex-1 min-w-0">
+                                        <div className="flex items-start gap-2">
+                                            <h3 className="text-lg font-bold text-slate-900 tracking-tight leading-tight break-all whitespace-normal">{goal.name}</h3>
+                                            {isComplete && <Check size={14} className="text-green-500 shrink-0 mt-1" />}
                                         </div>
                                         <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">{goal.category}</p>
                                     </div>
                                 </div>
-                                <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
                                     <button onClick={() => handleEditClick(goal)} className="p-1.5 text-slate-300 hover:text-orange-600 rounded-lg transition-colors"><Edit2 size={14} /></button>
                                     <button onClick={() => handleDelete(goal.goalId)} className="p-1.5 text-slate-300 hover:text-red-500 rounded-lg transition-colors"><Trash2 size={14} /></button>
                                 </div>
