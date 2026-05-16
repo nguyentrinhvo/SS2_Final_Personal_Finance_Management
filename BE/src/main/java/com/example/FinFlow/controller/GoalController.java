@@ -14,7 +14,7 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/goals")
-@CrossOrigin(origins = "*")
+
 public class GoalController {
 
     @Autowired
