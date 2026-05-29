@@ -16,7 +16,7 @@ The final product is a full-stack web application featuring interactive dashboar
 | 2   | [Member Name 2] | — | System Analysis & Documentation (SRS, ERD) |
 | 3   | [Member Name 3] | — | UI/UX Design & Presentation (Figma, Report) |
 
-> ⚠️ Please update the table above with actual team members and student IDs.
+> Please update the table above with actual team members and student IDs.
 
 ---
 
@@ -61,17 +61,17 @@ The final product is a full-stack web application featuring interactive dashboar
 
 ## Main Features
 
-- 🏦 **Account Management** – Create and manage multiple financial accounts (bank, cash, e-wallet, etc.)
-- 💸 **Transaction Tracking** – Log income and expense transactions with categories, dates, and notes
-- 📊 **Visual Reports** – Analyze spending and income with interactive pie charts and bar charts
-- 🎯 **Savings Goals** – Set financial goals and track progress towards them
-- 📋 **Budget Management** – Define monthly budgets per category and monitor usage
-- 🗂️ **Category Management** – Customize income and expense categories
-- 🤖 **Hybrid AI Financial Chatbot** – Chat with Gemini AI for advice, or use offline commands to automate transaction logging (even when the API hits rate limits).
-- 🔐 **Secure Authentication** – Register/Login with email-password, and basic forgot password support.
-- 🖼️ **Profile & Avatar** – Update user profile and upload avatar via Cloudinary
-- 📤 **Excel Export/Import** – Export transactions to `.xlsx` and import bulk data
-- 🌐 **Responsive UI** – Mobile-friendly interface with dark mode support
+- **Account Management** – Create and manage multiple financial accounts (bank, cash, e-wallet, etc.)
+- **Transaction Tracking** – Log income and expense transactions with categories, dates, and notes
+- **Visual Reports** – Analyze spending and income with interactive pie charts and bar charts
+- **Savings Goals** – Set financial goals and track progress towards them
+- **Budget Management** – Define monthly budgets per category and monitor usage
+- **Category Management** – Customize income and expense categories
+- **Hybrid AI Financial Chatbot** – Chat with Gemini AI for advice, or use offline commands to automate transaction logging (even when the API hits rate limits).
+- **Secure Authentication** – Register/Login with email-password, and basic forgot password support.
+- **Profile & Avatar** – Update user profile and upload avatar via Cloudinary
+- **Excel Export/Import** – Export transactions to `.xlsx` and import bulk data
+- **Responsive UI** – Mobile-friendly interface with dark mode support
 
 ---
 
@@ -241,9 +241,9 @@ The application is **live** and publicly accessible.
 
 | | |
 |---|---|
-| 🌐 **Live URL** | https://fifl.me/ |
-| 🌐 **Vercel Mirror** | https://ss-2-final-personal-finance-managem.vercel.app/ |
-| 📧 **Test account** | `testaccount` / `123123` |
+| **Live URL** | https://fifl.me/ |
+| **Vercel Mirror** | https://ss-2-final-personal-finance-managem.vercel.app/ |
+| **Test account** | `testaccount` / `123123` |
 
 > Alternatively, click **"Try live demo"** on the landing page or use **Register** to create a free account.
 
@@ -251,7 +251,7 @@ The application is **live** and publicly accessible.
 
 ## Known Issues & Limitations
 
-- ⏳ **API Cold Starts** — The free-tier TiDB Cloud and Gemini AI API often enter "sleep mode". The first request of a session may take 3–8 seconds.
-- 🔓 **Forgot Password Security** — The current "Forgot Password" feature resets passwords directly via API without email/OTP verification, posing a security risk.
-- ⚙️ **Lack of CI/CD pipeline** — Deployments are currently manual; the project lacks automated unit testing (e.g., JUnit/Jest) via GitHub Actions.
-- 📄 **Excel import validation** — Importing `.xlsx` files with unexpected column formats may silently skip invalid rows. Ensure the file matches the exported template.
+- **API Cold Starts** — The free-tier TiDB Cloud and Gemini AI API often enter "sleep mode". The first request of a session may take 3–8 seconds.
+- **Forgot Password Security** — The current "Forgot Password" feature resets passwords directly via API without email/OTP verification, posing a security risk.
+- **Lack of CI/CD pipeline** — Deployments are currently manual; the project lacks automated unit testing (e.g., JUnit/Jest) via GitHub Actions.
+- **Excel import validation** — Importing `.xlsx` files with unexpected column formats may silently skip invalid rows. Ensure the file matches the exported template.
