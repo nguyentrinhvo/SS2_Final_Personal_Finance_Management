@@ -12,11 +12,11 @@ The final product is a full-stack web application featuring interactive dashboar
 
 | No. | Full Name | Student ID | Main Responsibility |
 |-----|-----------|------------|---------------------|
-| 1   | Nguyễn Trình Võ | — | Fullstack Developer (FE, BE, AI, Deployment) |
-| 2   | [Member Name 2] | — | System Analysis & Documentation (SRS, ERD) |
-| 3   | [Member Name 3] | — | UI/UX Design & Presentation (Figma, Report) |
+| 1   | Nguyễn Trịnh Võ | 2301040201| Fullstack Developer (FE, BE, AI, Deployment) |
+| 2   | Lương Việt Anh | 2301040004 | System Analysis & Documentation (SRS, ERD) |
+| 3   | Nguyễn Cao Phong | 2301040146 | UI/UX Design & Presentation (Figma, Slides) |
 
-> Please update the table above with actual team members and student IDs.
+
 
 ---
 
